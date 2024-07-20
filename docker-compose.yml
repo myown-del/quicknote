@@ -1,0 +1,8 @@
+version: "3"
+
+name: quicknote
+services:
+  bot:
+    build: .
+    entrypoint:
+      [ "python", "-m", "quicknote" ]

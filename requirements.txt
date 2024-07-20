@@ -1,0 +1,7 @@
+aiogram>=3
+pydantic
+pytest-asyncio
+fastapi==0.100.1
+alembic
+dishka
+uvicorn==0.20.0
