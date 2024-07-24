@@ -1,0 +1,17 @@
+ENVIRONMENT=dev
+
+API__WORKERS=1
+API__INTERNAL_HOST=0.0.0.0
+API__EXTERNAL_HOST=https://google.com
+API__PORT=8080
+API__AUTO_RELOAD=true
+
+API__TG_WEBHOOK_PATH=/webhook
+
+DB__HOST=postgres
+DB__PORT=5432
+DB__USER=postgres
+DB__PASSWORD=postgres
+DB__DATABASE=postgres
+
+BOT__TOKEN=xxxxxxxxxxxxxx:xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx

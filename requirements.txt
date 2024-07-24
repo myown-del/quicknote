@@ -1,7 +1,10 @@
 aiogram>=3
 pydantic
 pytest-asyncio
-fastapi==0.100.1
+fastapi==0.109.1
 alembic
-dishka
+dishka==1.2.0
 uvicorn==0.20.0
+sqlalchemy>=2
+adaptix==3.0.0b7
+asyncpg

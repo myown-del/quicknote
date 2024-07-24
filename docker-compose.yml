@@ -3,6 +3,24 @@ version: "3"
 name: quicknote
 services:
   bot:
+    restart: always
+    env_file:
+      - .env
     build: .
+    volumes:
+      - "./quicknote:/quicknote"
+    ports:
+      - "8080:8080"
     entrypoint:
       [ "python", "-m", "quicknote" ]
+
+  postgres:
+    image: postgres:13
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: postgres
+    ports:
+      - "5432:5432"
+#    volumes:
+#      - quicknote-data:/var/lib/postgresql/data
