@@ -1,0 +1,2 @@
+class HashtagTooLongException(Exception):
+    pass

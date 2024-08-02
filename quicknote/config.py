@@ -24,6 +24,17 @@ class Database(BaseSettings):
         return f"postgresql+asyncpg://{self.user}:{self.password}@{self.host}:{self.port}/{self.database}"
 
 
+class Redis(BaseSettings):
+    host: str
+    port: int
+    db: int
+    password: str
+
+    @property
+    def uri(self) -> str:
+        return f"redis://:{self.password}@{self.host}:{self.port}/{self.db}"
+
+
 class Bot(BaseSettings):
     token: str
 
@@ -37,6 +48,7 @@ class EnvironmentType(Enum):
 class Config(BaseSettings):
     api: API
     db: Database
+    redis: Redis
     bot: Bot
     environment: EnvironmentType
 

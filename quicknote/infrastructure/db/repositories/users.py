@@ -2,19 +2,17 @@ from datetime import datetime
 from uuid import UUID
 
 from sqlalchemy import select, bindparam
+from sqlalchemy.orm import selectinload
 
-from quicknote.application.abstractions.repositories.user import IUserRepository
+from quicknote.application.abstractions.repositories.users import IUserRepository
 from quicknote.domain.entities.user import UserDM
-from quicknote.infrastructure.db.mappers.universal import (
-    from_db_to_entity,
-    from_entity_to_db,
-)
+from quicknote.infrastructure.db.mappers.users import get_user_dm, get_user_db
 from quicknote.infrastructure.db.models.user import User
 
 
 class UsersRepository(IUserRepository):
     async def create(self, entity: UserDM):
-        db_model = from_entity_to_db(entity, db_cls=User)
+        db_model = get_user_db(entity)
         self._session.add(db_model)
         await self._session.commit()
 
@@ -35,8 +33,11 @@ class UsersRepository(IUserRepository):
         await self._session.commit()
 
     async def get_by_telegram_id(self, telegram_id: int) -> UserDM | None:
-        query = select(User).where(User.telegram_id == telegram_id)
+        query = (
+            select(User)
+            .where(User.telegram_id == telegram_id)
+        )
         result = await self._session.execute(query)
         db_model = result.scalar()
         if db_model:
-            return from_db_to_entity(db_model, entity_cls=UserDM)
+            return get_user_dm(db_model)

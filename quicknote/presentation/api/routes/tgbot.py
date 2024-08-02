@@ -10,9 +10,7 @@ from quicknote.config import Config
 
 @inject
 async def handle_webhook(
-    request: Request,
-    bot: FromDishka[Bot],
-    dp: FromDishka[Dispatcher]
+    request: Request, bot: FromDishka[Bot], dp: FromDishka[Dispatcher]
 ):
     data = await request.json()
     update = Update(**data)

@@ -7,9 +7,3 @@ class CreateOrUpdateUser:
     username: str | None
     first_name: str
     last_name: str | None
-
-
-@dataclass
-class CreateNote:
-    by_user_telegram_id: int
-    text: str

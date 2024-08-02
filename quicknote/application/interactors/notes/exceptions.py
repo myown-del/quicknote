@@ -1,0 +1,2 @@
+class NoteTooLongException(Exception):
+    pass

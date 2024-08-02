@@ -15,5 +15,5 @@ async def validation_exception_handler(request, exc):
 def register_exception_handlers(app: FastAPI):
     app.add_exception_handler(
         exc_class_or_status_code=RequestValidationError,
-        handler=validation_exception_handler
+        handler=validation_exception_handler,
     )

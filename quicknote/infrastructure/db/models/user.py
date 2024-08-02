@@ -1,7 +1,7 @@
 from uuid import UUID
 
 from sqlalchemy import Uuid, Integer, String
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from quicknote.infrastructure.db.models.base import Base
 from quicknote.infrastructure.db.models.mixins import CreatedUpdatedMixin
@@ -15,3 +15,5 @@ class User(Base, CreatedUpdatedMixin):
     username: Mapped[str | None] = mapped_column(String, nullable=True)
     first_name: Mapped[str] = mapped_column(String, nullable=False)
     last_name: Mapped[str | None] = mapped_column(String, nullable=True)
+
+    notes = relationship("Note", back_populates="user", lazy="selectin")

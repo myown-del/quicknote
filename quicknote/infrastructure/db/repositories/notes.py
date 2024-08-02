@@ -1,11 +1,44 @@
-from quicknote.application.abstractions.repositories.note import INoteRepository
+from uuid import UUID
+
+from sqlalchemy import select
+from sqlalchemy.orm import selectinload
+
+from quicknote.application.abstractions.repositories.notes import INoteRepository
 from quicknote.domain.entities.note import NoteDM
-from quicknote.infrastructure.db.mappers.universal import from_entity_to_db
-from quicknote.infrastructure.db.models import Note
+from quicknote.infrastructure.db.mappers.notes import get_note_db, get_note_dm
+from quicknote.infrastructure.db.models import Note, User, NoteHashtag
 
 
 class NotesRepository(INoteRepository):
     async def create(self, entity: NoteDM):
-        db_model = from_entity_to_db(entity, db_cls=Note)
+        db_model = get_note_db(entity)
         self._session.add(db_model)
         await self._session.commit()
+
+    async def get_by_user_telegram_id(self, telegram_id: int) -> list[NoteDM]:
+        query = (
+            select(Note)
+            .join(User)
+            .where(User.telegram_id == telegram_id)
+            .options(
+                selectinload(Note.hashtags),
+            )
+        )
+        result = await self._session.execute(query)
+
+        db_models = result.unique().scalars().all()
+        notes = [get_note_dm(db_model) for db_model in db_models]
+        return notes
+
+    async def get_by_id(self, note_id: UUID) -> NoteDM | None:
+        query = (
+            select(Note)
+            .where(Note.id == note_id)
+            .options(
+                selectinload(Note.hashtags),
+            )
+        )
+        result = await self._session.execute(query)
+        db_model = result.scalar()
+        if db_model:
+            return get_note_dm(db_model)

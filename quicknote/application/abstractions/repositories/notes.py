@@ -14,3 +14,9 @@ class INoteRepository(IBaseRepository, ABC):
         """
         Создать заметку
         """
+
+    @abstractmethod
+    async def get_by_user_telegram_id(self, telegram_id: int) -> list[NoteDM]:
+        """
+        Получить заметки по идентификатору пользователя
+        """

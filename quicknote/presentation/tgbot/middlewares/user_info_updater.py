@@ -2,12 +2,11 @@ import logging
 from typing import Callable, Dict, Any, Awaitable
 
 from aiogram import BaseMiddleware
-from aiogram.types import Message, TelegramObject
+from aiogram.types import TelegramObject
 from dishka import AsyncContainer
 
-from quicknote.application.interactors.dto import CreateOrUpdateUser
-from quicknote.application.interactors.users import UserInteractor
-from quicknote.infrastructure.db.repositories.hub import RepositoryHub
+from quicknote.application.interactors import UserInteractor
+from quicknote.application.interactors.users.dto import CreateOrUpdateUser
 from quicknote.presentation.tgbot.utils.aiogram_helpers import extract_user_from_event
 
 logger = logging.getLogger(__name__)
