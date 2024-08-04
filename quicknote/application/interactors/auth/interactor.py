@@ -1,6 +1,8 @@
 from dataclasses import asdict
 from datetime import datetime
 
+from jwt import ExpiredSignatureError
+
 from quicknote.application.abstractions.repositories.hub import IRepositoryHub
 from quicknote.application.interactors import UserInteractor
 from quicknote.application.interactors.auth.dto import (
@@ -50,9 +52,9 @@ class AuthInteractor:
         return self._create_jwt_token(payload=JwtTokenCreationPayload(user_id=user.id))
 
     async def authorize_by_token(self, token: str) -> UserDM:
-        payload = self._decode_jwt_token(token)
-
-        if payload.expires_at < datetime.utcnow():
+        try:
+            payload = self._decode_jwt_token(token)
+        except ExpiredSignatureError:
             raise JwtTokenExpiredException()
 
         user = await self._user_interactor.get_user_by_id(payload.user_id)

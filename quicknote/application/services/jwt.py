@@ -17,12 +17,12 @@ class JwtService:
         self._algorithm = algorithm
 
     def create_token(self, payload: dict) -> JwtToken:
-        expires_at = payload.get("expires_at")
+        expires_at = payload.get("exp")
         if expires_at is None:
             expires_at = datetime.utcnow() + timedelta(
                 seconds=self._access_token_lifetime
             )
-            payload["expires_at"] = expires_at
+            payload["exp"] = expires_at
 
         encoded_jwt = jwt.encode(
             payload=payload, key=self._secret_key, algorithm=self._algorithm

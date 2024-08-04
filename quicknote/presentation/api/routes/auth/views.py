@@ -21,7 +21,7 @@ async def telegram_widget_auth(
             detail="Invalid signature",
         )
 
-    telegram_id = body.get("telegram_id")
+    telegram_id = body.get("id")
     try:
         token = await auth_interactor.login(telegram_id)
     except UserNotFoundException:
