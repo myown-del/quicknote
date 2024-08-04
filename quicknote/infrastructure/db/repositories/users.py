@@ -33,11 +33,13 @@ class UsersRepository(IUserRepository):
         await self._session.commit()
 
     async def get_by_telegram_id(self, telegram_id: int) -> UserDM | None:
-        query = (
-            select(User)
-            .where(User.telegram_id == telegram_id)
-        )
+        query = select(User).where(User.telegram_id == telegram_id)
         result = await self._session.execute(query)
         db_model = result.scalar()
+        if db_model:
+            return get_user_dm(db_model)
+
+    async def get_by_id(self, entity_id: UUID) -> UserDM | None:
+        db_model = await self._get_db_by_id(entity_id)
         if db_model:
             return get_user_dm(db_model)

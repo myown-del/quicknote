@@ -21,4 +21,6 @@ def get_user_db(user_dm: UserDM) -> User:
         username=user_dm.username,
         first_name=user_dm.first_name,
         last_name=user_dm.last_name,
+        created_at=user_dm.created_at,
+        updated_at=user_dm.updated_at,
     )

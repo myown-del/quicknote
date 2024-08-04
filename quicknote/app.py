@@ -6,6 +6,7 @@ from dishka import make_async_container, AsyncContainer
 from dishka.integrations import fastapi as fastapi_integration
 from fastapi import FastAPI
 
+from quicknote.application.services.factory import ServiceProvider
 from quicknote.config import load_config, Config
 from quicknote.ioc import AppProvider
 from quicknote.log import setup_logging
@@ -37,6 +38,7 @@ def create_app() -> FastAPI:
         BotProvider(),
         DatabaseProvider(),
         InteractorProvider(),
+        ServiceProvider(),
         DispatcherProvider(),
         context={Config: config},
     )

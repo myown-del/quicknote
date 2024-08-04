@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from uuid import UUID
 
 from quicknote.application.abstractions.repositories.base import IBaseRepository
 from quicknote.domain.entities.user import UserDM
@@ -19,4 +20,8 @@ class IUserRepository(IBaseRepository, ABC):
 
     @abstractmethod
     async def update(self, entity: UserDM) -> None:
+        raise NotImplementedError
+
+    @abstractmethod
+    async def get_by_id(self, user_id: UUID) -> UserDM | None:
         raise NotImplementedError

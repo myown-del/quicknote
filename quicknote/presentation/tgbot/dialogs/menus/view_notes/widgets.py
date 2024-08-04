@@ -12,9 +12,9 @@ notes_list_window = Window(
     Case(
         {
             True: Const("<b>Your notes 👇</b>"),
-            False: Const("<b>You have no notes yet</b>")
+            False: Const("<b>You have no notes yet</b>"),
         },
-        selector=F["notes"].len() > 0
+        selector=F["notes"].len() > 0,
     ),
     SimpleScrollingGroup(
         Select(
@@ -37,9 +37,7 @@ notes_list_window = Window(
 )
 
 note_details_window = Window(
-    Format(
-        "{note.text}"
-    ),
+    Format("{note.text}"),
     Button(
         text=Format("Created: {note.created_at}"),
         id="note_details_created",

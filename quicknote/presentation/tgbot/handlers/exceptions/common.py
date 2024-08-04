@@ -16,10 +16,7 @@ async def handle_exception(error: ErrorEvent, dialog_manager: DialogManager):
         # with suppress(Exception):
         #     await error.update.callback_query.message.delete()
         user = error.update.callback_query.from_user
-        await dialog_manager.start(
-            state=MainMenu.main_menu,
-            mode=StartMode.RESET_STACK
-        )
+        await dialog_manager.start(state=MainMenu.main_menu, mode=StartMode.RESET_STACK)
         logger.info(f"Restart dialog for user '{user.full_name}' (tg_id: {user.id})")
         return False
 

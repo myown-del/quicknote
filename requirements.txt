@@ -10,3 +10,5 @@ adaptix==3.0.0b7
 asyncpg
 aiogram_dialog==2.1.0
 redis
+pyjwt
+mypy

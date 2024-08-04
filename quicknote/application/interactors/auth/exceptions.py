@@ -1,0 +1,2 @@
+class JwtTokenExpiredException(Exception):
+    pass

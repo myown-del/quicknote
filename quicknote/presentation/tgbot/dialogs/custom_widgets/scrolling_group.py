@@ -6,9 +6,9 @@ from aiogram_dialog.widgets.kbd import ScrollingGroup
 
 class SimpleScrollingGroup(ScrollingGroup):
     async def _render_pager(
-            self,
-            pages: int,
-            manager: DialogManager,
+        self,
+        pages: int,
+        manager: DialogManager,
     ) -> RawKeyboard:
         if self.hide_pager:
             return []
