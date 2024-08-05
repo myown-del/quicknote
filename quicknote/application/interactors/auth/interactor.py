@@ -21,12 +21,10 @@ from quicknote.domain.entities.user import UserDM
 class AuthInteractor:
     def __init__(
         self,
-        repo_hub: IRepositoryHub,
         user_interactor: UserInteractor,
         config: Config,
         jwt_service: JwtService,
     ):
-        self._repo_hub = repo_hub
         self._user_interactor = user_interactor
         self._config = config
         self._jwt_service = jwt_service
@@ -43,7 +41,11 @@ class AuthInteractor:
         return self._jwt_service.create_token(payload=asdict(payload))
 
     def _decode_jwt_token(self, token: str) -> DecodedJwtTokenPayload:
-        data = self._jwt_service.decode_token(token)
+        try:
+            data = self._jwt_service.decode_token(token)
+        except ExpiredSignatureError:
+            raise JwtTokenExpiredException()
+
         jwt_token_payload = DecodedJwtTokenPayload(**data)
         return jwt_token_payload
 
@@ -52,10 +54,6 @@ class AuthInteractor:
         return self._create_jwt_token(payload=JwtTokenCreationPayload(user_id=user.id))
 
     async def authorize_by_token(self, token: str) -> UserDM:
-        try:
-            payload = self._decode_jwt_token(token)
-        except ExpiredSignatureError:
-            raise JwtTokenExpiredException()
-
+        payload = self._decode_jwt_token(token)
         user = await self._user_interactor.get_user_by_id(payload.user_id)
         return user

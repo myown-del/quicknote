@@ -1,15 +1,19 @@
 from uuid import UUID
 
 from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from quicknote.application.abstractions.repositories.notes import INoteRepository
+from quicknote.application.abstractions.repositories.notes import INotesRepository
 from quicknote.domain.entities.note import NoteDM
 from quicknote.infrastructure.db.mappers.notes import get_note_db, get_note_dm
 from quicknote.infrastructure.db.models import Note, User, NoteHashtag
 
 
-class NotesRepository(INoteRepository):
+class NotesRepository(INotesRepository):
+    def __init__(self, session: AsyncSession):
+        self._session = session
+
     async def create(self, entity: NoteDM):
         db_model = get_note_db(entity)
         self._session.add(db_model)

@@ -1,11 +1,11 @@
 from abc import ABC, abstractmethod
+from typing import Protocol
 from uuid import UUID
 
-from quicknote.application.abstractions.repositories.base import IBaseRepository
 from quicknote.domain.entities.user import UserDM
 
 
-class IUserRepository(IBaseRepository, ABC):
+class IUsersRepository(Protocol):
     """
     Интерфейс репозитория пользователей
     """

@@ -2,16 +2,19 @@ from datetime import datetime
 from uuid import UUID
 
 from sqlalchemy import select, bindparam
-from sqlalchemy.orm import selectinload
+from sqlalchemy.ext.asyncio import AsyncSession
 
-from quicknote.application.abstractions.repositories.users import IUserRepository
+from quicknote.application.abstractions.repositories.users import IUsersRepository
 from quicknote.domain.entities.user import UserDM
 from quicknote.infrastructure.db.mappers.users import get_user_dm, get_user_db
 from quicknote.infrastructure.db.models.user import User
 
 
-class UsersRepository(IUserRepository):
-    async def create(self, entity: UserDM):
+class UsersRepository(IUsersRepository):
+    def __init__(self, session: AsyncSession):
+        self._session = session
+
+    async def create(self, entity: UserDM) -> None:
         db_model = get_user_db(entity)
         self._session.add(db_model)
         await self._session.commit()
@@ -24,7 +27,7 @@ class UsersRepository(IUserRepository):
         )
         return result.scalar()
 
-    async def update(self, entity: UserDM):
+    async def update(self, entity: UserDM) -> None:
         old_db_model = await self._get_db_by_id(entity.id)
         old_db_model.username = entity.username
         old_db_model.first_name = entity.first_name

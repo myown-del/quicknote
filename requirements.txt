@@ -1,4 +1,5 @@
 aiogram>=3
+aiogram_tests
 pydantic
 pytest-asyncio
 fastapi==0.109.1
@@ -12,3 +13,4 @@ aiogram_dialog==2.1.0
 redis
 pyjwt
 mypy
+pytest-freezer==0.4.8

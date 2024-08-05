@@ -3,10 +3,12 @@ from typing import AsyncIterable
 from dishka import Provider, provide, Scope
 from sqlalchemy.ext.asyncio import async_sessionmaker, AsyncSession
 
-from quicknote.application.abstractions.repositories.hub import IRepositoryHub
+from quicknote.application.abstractions.repositories.notes import INotesRepository
+from quicknote.application.abstractions.repositories.users import IUsersRepository
 from quicknote.config import Config
 from quicknote.infrastructure.db.connection import new_session_maker
-from quicknote.infrastructure.db.repositories.hub import RepositoryHub
+from quicknote.infrastructure.db.repositories.notes import NotesRepository
+from quicknote.infrastructure.db.repositories.users import UsersRepository
 
 
 class DatabaseProvider(Provider):
@@ -21,6 +23,9 @@ class DatabaseProvider(Provider):
         async with session_maker() as session:
             yield session
 
-    repository_hub = provide(
-        RepositoryHub, scope=Scope.REQUEST, provides=IRepositoryHub
+    users_repository = provide(
+        UsersRepository, scope=Scope.REQUEST, provides=IUsersRepository
+    )
+    notes_repository = provide(
+        NotesRepository, scope=Scope.REQUEST, provides=INotesRepository
     )

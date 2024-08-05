@@ -52,5 +52,6 @@ def get_router() -> APIRouter:
         path="/tg-widget",
         endpoint=telegram_widget_auth,
         methods=["POST"],
+        response_model=JwtTokenResponse
     )
     return router

@@ -1,11 +1,12 @@
 import re
 from uuid import uuid4, UUID
 
-from quicknote.application.abstractions.repositories.hub import IRepositoryHub
-from quicknote.application.interactors.hashtags.interactor import HashtagInteractor
+from quicknote.application.abstractions.repositories.notes import INotesRepository
+from quicknote.application.abstractions.repositories.users import IUsersRepository
 from quicknote.application.interactors.notes.dto import CreateNote
 from quicknote.application.interactors.notes.exceptions import NoteTooLongException
 from quicknote.application.interactors.notes.rules import MAX_NOTE_LENGTH
+from quicknote.application.interactors.users.exceptions import UserNotFoundException
 from quicknote.domain.entities.note import NoteDM
 
 
@@ -16,36 +17,34 @@ def parse_hashtags(text: str) -> list[str]:
 
 
 class NoteInteractor:
-    def __init__(self, repo_hub: IRepositoryHub, hashtag_interactor: HashtagInteractor):
-        self._repo_hub = repo_hub
-        self._hashtag_interactor = hashtag_interactor
+    def __init__(
+            self,
+            notes_repo: INotesRepository,
+            users_repo: IUsersRepository,
+    ):
+        self._notes_repo = notes_repo
+        self._users_repo = users_repo
 
-    async def create_note(self, note_data: CreateNote):
+    async def create_note(self, note_data: CreateNote) -> UUID:
         if len(note_data.text) > MAX_NOTE_LENGTH:
             raise NoteTooLongException()
 
-        # Parsing and creating hashtags
-        note_hashtags = parse_hashtags(note_data.text)
-        if note_hashtags:
-            await self._hashtag_interactor.create_hashtags(note_hashtags)
-
         # Creating note
-        user = await self._repo_hub.users.get_by_telegram_id(
+        user = await self._users_repo.get_by_telegram_id(
             note_data.by_user_telegram_id
         )
-        note = NoteDM(id=uuid4(), user_id=user.id, text=note_data.text)
-        await self._repo_hub.notes.create(note)
+        if not user:
+            raise UserNotFoundException()
 
-        # Linking hashtags to the note
-        if note_hashtags:
-            await self._hashtag_interactor.update_note_hashtags(
-                note_id=note.id, hashtags=note_hashtags
-            )
+        note = NoteDM(id=uuid4(), user_id=user.id, text=note_data.text)
+        await self._notes_repo.create(note)
+
+        return note.id
 
     async def get_notes(self, user_telegram_id: int) -> list[NoteDM]:
-        notes = await self._repo_hub.notes.get_by_user_telegram_id(user_telegram_id)
+        notes = await self._notes_repo.get_by_user_telegram_id(user_telegram_id)
         return notes
 
     async def get_note_by_id(self, note_id: UUID) -> NoteDM:
-        note = await self._repo_hub.notes.get_by_id(note_id)
+        note = await self._notes_repo.get_by_id(note_id)
         return note

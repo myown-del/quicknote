@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta
 
+import pytest
 from jwt import ExpiredSignatureError
 
 from quicknote.application.services.jwt import JwtService
@@ -54,8 +55,5 @@ def test_jwt_token_expiration(freezer):
     tick_time = access_token_lifetime_seconds + 1
     freezer.tick(delta=timedelta(seconds=tick_time))
 
-    try:
+    with pytest.raises(ExpiredSignatureError):
         jwt_service.decode_token(token=jwt_token_encoded.access_token)
-        assert False
-    except ExpiredSignatureError:
-        assert True
