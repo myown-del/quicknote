@@ -12,24 +12,16 @@ class INotesRepository(Protocol):
 
     @abstractmethod
     async def create(self, entity: NoteDM):
-        """
-        Создать заметку
-        """
+        raise NotImplementedError
 
     @abstractmethod
     async def get_by_user_telegram_id(self, telegram_id: int) -> list[NoteDM]:
-        """
-        Получить заметки по идентификатору пользователя
-        """
+        raise NotImplementedError
 
     @abstractmethod
     async def get_by_id(self, entity_id: UUID) -> NoteDM:
-        """
-        Получить заметку по идентификатору
-        """
+        raise NotImplementedError
 
     @abstractmethod
     async def delete_all(self):
-        """
-        Удалить все заметки
-        """
+        raise NotImplementedError

@@ -1,5 +1,4 @@
 from dataclasses import asdict
-from datetime import datetime
 
 from jwt import ExpiredSignatureError
 
@@ -30,14 +29,18 @@ class AuthInteractor:
 
     async def check_auth_widget_hash(self, body: dict) -> bool:
         return check_widget_auth_signature(
-            token=self._bot_config.token, hash=str(body.get("hash")), **body
+            token=self._bot_config.token,
+            hash=str(body.get("hash")),
+            **body
         )
 
     def _create_jwt_token(
         self,
         payload: JwtTokenCreationPayload,
     ) -> JwtToken:
-        return self._jwt_service.create_token(payload=asdict(payload))
+        return self._jwt_service.create_token(
+            payload=asdict(payload)
+        )
 
     def _decode_jwt_token(self, token: str) -> DecodedJwtTokenPayload:
         try:
@@ -50,7 +53,11 @@ class AuthInteractor:
 
     async def login(self, telegram_id: int) -> JwtToken:
         user = await self._user_interactor.get_user_by_telegram_id(telegram_id)
-        return self._create_jwt_token(payload=JwtTokenCreationPayload(user_id=user.id))
+        return self._create_jwt_token(
+            payload=JwtTokenCreationPayload(
+                user_id=user.id
+            )
+        )
 
     async def authorize_by_token(self, token: str) -> UserDM:
         payload = self._decode_jwt_token(token)
