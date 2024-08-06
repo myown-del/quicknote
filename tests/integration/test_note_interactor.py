@@ -20,7 +20,7 @@ async def test_note_creation(dishka: AsyncContainer):
         notes_repo = await container.get(INotesRepository)
         users_repo = await container.get(IUsersRepository)
 
-        user_telegram_id = 123
+        user_telegram_id = 1
         user_id = uuid4()
         await users_repo.create(UserDM(
             id=user_id,
@@ -48,7 +48,7 @@ async def test_note_too_long_exception(dishka: AsyncContainer):
         interactor = await container.get(NoteInteractor)
         users_repo = await container.get(IUsersRepository)
 
-        user_telegram_id = 123
+        user_telegram_id = 2
         await users_repo.create(UserDM(
             id=uuid4(),
             telegram_id=user_telegram_id,
@@ -58,7 +58,7 @@ async def test_note_too_long_exception(dishka: AsyncContainer):
         ))
 
         data = CreateNote(
-            by_user_telegram_id=123,
+            by_user_telegram_id=user_telegram_id,
             text="a" * (MAX_NOTE_LENGTH + 1)
         )
         with pytest.raises(NoteTooLongException):
@@ -71,7 +71,7 @@ async def test_note_creation_by_nonexistent_user(dishka: AsyncContainer):
         interactor = await container.get(NoteInteractor)
 
         data = CreateNote(
-            by_user_telegram_id=123,
+            by_user_telegram_id=3,
             text="Some note text",
         )
         with pytest.raises(UserNotFoundException):

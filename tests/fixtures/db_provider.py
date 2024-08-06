@@ -1,17 +1,29 @@
+import logging
+import os
+
 from dishka import Provider, Scope, provide
+from testcontainers.postgres import PostgresContainer
 
-from quicknote.application.abstractions.repositories.notes import INotesRepository
-from quicknote.application.abstractions.repositories.users import IUsersRepository
-from tests.mocks.db.repositories.notes import NotesRepositoryMock
-from tests.mocks.db.repositories.users import UsersRepositoryMock
+from quicknote.application.abstractions.config.models import IDatabaseConfig
+from quicknote.config.models import Config
+from tests.mocks.config import DatabaseConfig
+
+logger = logging.getLogger(__name__)
 
 
-class DbProvider(Provider):
+class TestDbProvider(Provider):
     scope = Scope.APP
 
-    users_repository = provide(
-        UsersRepositoryMock, scope=Scope.REQUEST, provides=IUsersRepository
-    )
-    notes_repository = provide(
-        NotesRepositoryMock, scope=Scope.REQUEST, provides=INotesRepository
-    )
+    @provide(provides=IDatabaseConfig)
+    def get_db_config(self, config: Config) -> DatabaseConfig:
+        postgres = PostgresContainer("postgres:16.1")
+        if os.name == "nt":
+            postgres.get_container_host_ip = lambda: "localhost"
+        try:
+            postgres.start()
+            postgres_url_ = postgres.get_connection_url().replace("psycopg2", "asyncpg")
+            db_config = DatabaseConfig(uri_=postgres_url_)
+            config.db = db_config
+            yield db_config
+        finally:
+            postgres.stop()

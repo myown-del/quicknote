@@ -3,7 +3,6 @@ from datetime import datetime
 
 from jwt import ExpiredSignatureError
 
-from quicknote.application.abstractions.repositories.hub import IRepositoryHub
 from quicknote.application.interactors import UserInteractor
 from quicknote.application.interactors.auth.dto import (
     JwtTokenCreationPayload,
@@ -11,9 +10,9 @@ from quicknote.application.interactors.auth.dto import (
 )
 from quicknote.application.interactors.auth.exceptions import JwtTokenExpiredException
 from quicknote.application.services.jwt import JwtService
-from quicknote.config import Config
 from aiogram.utils.auth_widget import check_signature as check_widget_auth_signature
 
+from quicknote.config.models import BotConfig
 from quicknote.domain.entities.jwt import JwtToken
 from quicknote.domain.entities.user import UserDM
 
@@ -22,16 +21,16 @@ class AuthInteractor:
     def __init__(
         self,
         user_interactor: UserInteractor,
-        config: Config,
+        bot_config: BotConfig,
         jwt_service: JwtService,
     ):
         self._user_interactor = user_interactor
-        self._config = config
+        self._bot_config = bot_config
         self._jwt_service = jwt_service
 
     async def check_auth_widget_hash(self, body: dict) -> bool:
         return check_widget_auth_signature(
-            token=self._config.bot.token, hash=str(body.get("hash")), **body
+            token=self._bot_config.token, hash=str(body.get("hash")), **body
         )
 
     def _create_jwt_token(

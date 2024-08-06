@@ -13,7 +13,7 @@ async def test_user_creation(dishka: AsyncContainer):
         user_repo = await container.get(IUsersRepository)
 
         data = CreateOrUpdateUser(
-            telegram_id=123,
+            telegram_id=4,
             username="test_username",
             first_name="John",
             last_name="Smith",

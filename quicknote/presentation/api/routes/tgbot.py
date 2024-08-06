@@ -5,7 +5,7 @@ from dishka.integrations.fastapi import inject
 from fastapi import APIRouter
 from starlette.requests import Request
 
-from quicknote.config import Config
+from quicknote.config.models import APIConfig
 
 
 @inject
@@ -17,10 +17,10 @@ async def handle_webhook(
     await dp.feed_webhook_update(bot=bot, update=update)
 
 
-def get_router(config: Config) -> APIRouter:
+def get_router(config: APIConfig) -> APIRouter:
     router = APIRouter()
     router.add_api_route(
-        path=config.api.tg_webhook_path,
+        path=config.tg_webhook_path,
         endpoint=handle_webhook,
         methods=["POST"],
     )

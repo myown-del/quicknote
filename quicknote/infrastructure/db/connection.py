@@ -1,14 +1,15 @@
-from sqlalchemy.ext.asyncio import async_sessionmaker, AsyncSession, create_async_engine
+from sqlalchemy import make_url
+from sqlalchemy.ext.asyncio import async_sessionmaker, AsyncSession, create_async_engine, AsyncEngine
 
-from quicknote.config import Config
+from quicknote.application.abstractions.config.models import IDatabaseConfig
 
 
-def new_session_maker(config: Config) -> async_sessionmaker[AsyncSession]:
-    engine = create_async_engine(
-        config.db.uri,
-        pool_size=15,
-        max_overflow=15,
+def create_engine(config: IDatabaseConfig) -> AsyncEngine:
+    return create_async_engine(url=make_url(config.uri))
+
+
+def create_session_maker(engine: AsyncEngine) -> async_sessionmaker[AsyncSession]:
+    pool: async_sessionmaker[AsyncSession] = async_sessionmaker(
+        bind=engine, expire_on_commit=False, autoflush=False
     )
-    return async_sessionmaker(
-        engine, class_=AsyncSession, autoflush=False, expire_on_commit=False
-    )
+    return pool

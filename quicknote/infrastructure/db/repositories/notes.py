@@ -7,7 +7,7 @@ from sqlalchemy.orm import selectinload
 from quicknote.application.abstractions.repositories.notes import INotesRepository
 from quicknote.domain.entities.note import NoteDM
 from quicknote.infrastructure.db.mappers.notes import get_note_db, get_note_dm
-from quicknote.infrastructure.db.models import Note, User, NoteHashtag
+from quicknote.infrastructure.db.models import Note, User
 
 
 class NotesRepository(INotesRepository):
@@ -24,9 +24,6 @@ class NotesRepository(INotesRepository):
             select(Note)
             .join(User)
             .where(User.telegram_id == telegram_id)
-            .options(
-                selectinload(Note.hashtags),
-            )
         )
         result = await self._session.execute(query)
 
@@ -38,9 +35,6 @@ class NotesRepository(INotesRepository):
         query = (
             select(Note)
             .where(Note.id == note_id)
-            .options(
-                selectinload(Note.hashtags),
-            )
         )
         result = await self._session.execute(query)
         db_model = result.scalar()

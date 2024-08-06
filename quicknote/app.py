@@ -7,8 +7,9 @@ from dishka.integrations import fastapi as fastapi_integration
 from fastapi import FastAPI
 
 from quicknote.application.services.factory import ServiceProvider
-from quicknote.config import load_config, Config
-from quicknote.ioc import AppProvider
+from quicknote.config.di import ConfigProvider, DatabaseConfigProvider
+from quicknote.config.models import APIConfig, Config
+from quicknote.config.parser import load_config
 from quicknote.log import setup_logging
 from quicknote.presentation.api.factory import create_bare_app
 from quicknote.presentation.tgbot.factory import DispatcherProvider, BotProvider
@@ -18,8 +19,8 @@ from quicknote.application.interactors.factory import InteractorProvider
 logger = logging.getLogger(__name__)
 
 
-async def on_startup(container: AsyncContainer, config: Config):
-    webhook_url = config.api.external_host + config.api.tg_webhook_path
+async def on_startup(container: AsyncContainer, config: APIConfig):
+    webhook_url = config.external_host + config.tg_webhook_path
 
     # bot = await container.get(Bot)
     # await bot.set_webhook(
@@ -31,21 +32,25 @@ async def on_startup(container: AsyncContainer, config: Config):
 def create_app() -> FastAPI:
     setup_logging()
 
-    config = load_config()
-    app = create_bare_app(config=config)
+    config = load_config(
+        config_class=Config,
+        env_file_path=".env"
+    )
+    app = create_bare_app(config=config.api)
     container = make_async_container(
-        AppProvider(),
+        ConfigProvider(),
         BotProvider(),
+        DatabaseConfigProvider(),
         DatabaseProvider(),
         InteractorProvider(),
         ServiceProvider(),
         DispatcherProvider(),
-        context={Config: config},
+        context={Config: config}
     )
 
     fastapi_integration.setup_dishka(container=container, app=app)
 
-    setup = partial(on_startup, container, config)
+    setup = partial(on_startup, container, config.api)
     app.add_event_handler("startup", setup)
 
     return app
