@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from sqlalchemy import select
+from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -40,3 +40,7 @@ class NotesRepository(INotesRepository):
         db_model = result.scalar()
         if db_model:
             return get_note_dm(db_model)
+
+    async def delete_all(self):
+        await self._session.execute(text("DELETE FROM notes"))
+        await self._session.commit()

@@ -13,7 +13,7 @@ class Note(Base, CreatedUpdatedMixin):
     __tablename__ = "notes"
 
     id: Mapped[UUID] = mapped_column(Uuid, primary_key=True)
-    user_id: Mapped[UUID] = mapped_column(Uuid, ForeignKey("users.id"), nullable=False)
+    user_id: Mapped[UUID] = mapped_column(Uuid, ForeignKey("users.id", ondelete="CASCADE", onupdate="CASCADE"), nullable=False)
     text: Mapped[str] = mapped_column(String(length=4096), nullable=False)
 
     user = relationship("User", back_populates="notes", lazy="selectin")

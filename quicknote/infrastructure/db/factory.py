@@ -7,6 +7,7 @@ from quicknote.application.abstractions.repositories.notes import INotesReposito
 from quicknote.application.abstractions.repositories.users import IUsersRepository
 from quicknote.application.abstractions.config.models import IDatabaseConfig
 from quicknote.infrastructure.db.connection import create_engine, create_session_maker
+from quicknote.infrastructure.db.repositories.hub import RepositoryHub
 from quicknote.infrastructure.db.repositories.notes import NotesRepository
 from quicknote.infrastructure.db.repositories.users import UsersRepository
 
@@ -36,4 +37,7 @@ class DatabaseProvider(Provider):
     )
     notes_repository = provide(
         NotesRepository, scope=Scope.REQUEST, provides=INotesRepository
+    )
+    hub_repository = provide(
+        RepositoryHub, scope=Scope.REQUEST
     )

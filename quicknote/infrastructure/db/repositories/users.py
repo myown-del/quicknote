@@ -1,7 +1,7 @@
 from datetime import datetime
 from uuid import UUID
 
-from sqlalchemy import select, bindparam
+from sqlalchemy import select, bindparam, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from quicknote.application.abstractions.repositories.users import IUsersRepository
@@ -46,3 +46,7 @@ class UsersRepository(IUsersRepository):
         db_model = await self._get_db_by_id(entity_id)
         if db_model:
             return get_user_dm(db_model)
+
+    async def delete_all(self) -> None:
+        await self._session.execute(text("DELETE FROM users"))
+        await self._session.commit()

@@ -25,3 +25,7 @@ class IUsersRepository(Protocol):
     @abstractmethod
     async def get_by_id(self, user_id: UUID) -> UserDM | None:
         raise NotImplementedError
+
+    @abstractmethod
+    async def delete_all(self) -> None:
+        raise NotImplementedError

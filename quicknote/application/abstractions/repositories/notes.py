@@ -27,3 +27,9 @@ class INotesRepository(Protocol):
         """
         Получить заметку по идентификатору
         """
+
+    @abstractmethod
+    async def delete_all(self):
+        """
+        Удалить все заметки
+        """
