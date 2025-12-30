@@ -1,9 +1,10 @@
+from datetime import datetime
 from uuid import uuid4, UUID
 
 from brain.application.abstractions.repositories.notes import INotesRepository
 from brain.application.abstractions.repositories.notes_graph import INotesGraphRepository
 from brain.application.abstractions.repositories.users import IUsersRepository
-from brain.application.interactors.notes.dto import CreateNote
+from brain.application.interactors.notes.dto import CreateNote, UpdateNote
 from brain.application.interactors.notes.exceptions import NoteNotFoundException
 from brain.application.interactors.users.exceptions import UserNotFoundException
 from brain.domain.entities.note import Note
@@ -56,3 +57,19 @@ class NoteInteractor:
 
         await self._notes_repo.delete_by_id(note_id)
         await self._notes_graph_repo.delete_note(note_id)
+
+    async def update_note(self, note_data: UpdateNote) -> Note:
+        note = await self._notes_repo.get_by_id(note_data.note_id)
+        if note is None:
+            raise NoteNotFoundException()
+
+        note.title = note_data.title
+        note.text = note_data.text
+        note.updated_at = datetime.utcnow()
+
+        await self._notes_repo.update(note)
+        await self._notes_graph_repo.upsert_note(note)
+        link_titles = extract_wikilinks(note.text or "")
+        await self._notes_graph_repo.sync_connections(note, link_titles)
+
+        return note

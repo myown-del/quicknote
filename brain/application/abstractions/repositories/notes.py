@@ -23,6 +23,10 @@ class INotesRepository(Protocol):
         raise NotImplementedError
 
     @abstractmethod
+    async def update(self, entity: Note):
+        raise NotImplementedError
+
+    @abstractmethod
     async def delete_all(self):
         raise NotImplementedError
 

@@ -18,13 +18,13 @@ logger = logging.getLogger(__name__)
 
 
 async def setup_tasks(container: AsyncContainer, config: APIConfig):
-    webhook_url = config.external_host + config.tg_webhook_path
+    webhook_url = f"{config.external_host}/api/tg-bot/webhook"
 
     bot = await container.get(Bot)
     await bot.set_webhook(
         url=webhook_url
     )
-    logger.info(f"Binded telegram webhooks to url: {webhook_url}")
+    logger.info(f"Binded bot webhooks to url: {webhook_url}")
 
 
 async def main():

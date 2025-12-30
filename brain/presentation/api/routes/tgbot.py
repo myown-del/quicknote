@@ -22,7 +22,7 @@ async def handle_webhook(
 def get_router(config: APIConfig) -> APIRouter:
     router = APIRouter()
     router.add_api_route(
-        path=config.tg_webhook_path,
+        path='/tg-bot/webhook',
         endpoint=handle_webhook,
         methods=["POST"],
     )

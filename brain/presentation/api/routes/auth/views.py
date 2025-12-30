@@ -131,14 +131,14 @@ def get_router() -> APIRouter:
         response_model=JwtTokenSchema
     )
     router.add_api_route(
-        path="/tg-bot/session",
+        path="/tg-bot/sessions",
         endpoint=create_tg_bot_auth_session,
         methods=["POST"],
         response_model=TelegramBotAuthSessionSchema,
         status_code=status.HTTP_201_CREATED,
     )
     router.add_api_route(
-        path="/tg-bot/session",
+        path="/tg-bot/sessions",
         endpoint=get_tg_bot_auth_session,
         methods=["GET"],
         response_model=TelegramBotAuthSessionSchema,

@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import Enum
 
 from brain.application.abstractions.config.models import IDatabaseConfig, INeo4jConfig
@@ -9,8 +9,8 @@ class APIConfig:
     internal_host: str
     external_host: str
     port: int
-    tg_webhook_path: str
     auto_reload: bool = True
+    allowed_origins: list[str] = field(default_factory=lambda: ["*"])
     workers: int = 1
 
 

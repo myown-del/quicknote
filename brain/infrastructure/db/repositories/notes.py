@@ -1,3 +1,4 @@
+from datetime import datetime
 from uuid import UUID
 
 from sqlalchemy import select, text
@@ -40,6 +41,20 @@ class NotesRepository(INotesRepository):
         db_model = result.scalar()
         if db_model:
             return map_note_to_dm(db_model)
+
+    async def update(self, entity: Note):
+        query = (
+            select(NoteDB)
+            .where(NoteDB.id == entity.id)
+        )
+        result = await self._session.execute(query)
+        db_model = result.scalar()
+        if not db_model:
+            return
+        db_model.title = entity.title
+        db_model.text = entity.text
+        db_model.updated_at = entity.updated_at or datetime.utcnow()
+        await self._session.commit()
 
     async def delete_all(self):
         await self._session.execute(text("DELETE FROM notes"))
