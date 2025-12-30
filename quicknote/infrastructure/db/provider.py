@@ -5,11 +5,23 @@ from sqlalchemy.ext.asyncio import async_sessionmaker, AsyncSession, AsyncEngine
 
 from quicknote.application.abstractions.repositories.notes import INotesRepository
 from quicknote.application.abstractions.repositories.users import IUsersRepository
+from quicknote.application.abstractions.repositories.jwt import (
+    IJwtRefreshTokensRepository,
+)
+from quicknote.application.abstractions.repositories.tg_bot_auth import (
+    ITelegramBotAuthSessionsRepository,
+)
 from quicknote.application.abstractions.config.models import IDatabaseConfig
 from quicknote.infrastructure.db.connection import create_engine, create_session_maker
 from quicknote.infrastructure.db.repositories.hub import RepositoryHub
 from quicknote.infrastructure.db.repositories.notes import NotesRepository
 from quicknote.infrastructure.db.repositories.users import UsersRepository
+from quicknote.infrastructure.db.repositories.jwt import (
+    JwtRefreshTokensRepository,
+)
+from quicknote.infrastructure.db.repositories.tg_bot_auth import (
+    TelegramBotAuthSessionsRepository,
+)
 
 
 class DatabaseProvider(Provider):
@@ -37,6 +49,16 @@ class DatabaseProvider(Provider):
     )
     notes_repository = provide(
         NotesRepository, scope=Scope.REQUEST, provides=INotesRepository
+    )
+    tg_bot_auth_repository = provide(
+        TelegramBotAuthSessionsRepository,
+        scope=Scope.REQUEST,
+        provides=ITelegramBotAuthSessionsRepository,
+    )
+    jwt_repository = provide(
+        JwtRefreshTokensRepository,
+        scope=Scope.REQUEST,
+        provides=IJwtRefreshTokensRepository,
     )
     hub_repository = provide(
         RepositoryHub, scope=Scope.REQUEST

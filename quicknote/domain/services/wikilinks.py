@@ -1,6 +1,7 @@
 import re
 
-
+# Example 1: [[Child]] -> ["Child"]
+# Example 2: [[Child|alias]] -> ["Child"]
 WIKILINK_PATTERN = re.compile(r"\[\[([^\[\]\n]+)\]\]")
 
 

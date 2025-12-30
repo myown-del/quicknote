@@ -4,7 +4,7 @@ from quicknote.application.abstractions.repositories.notes import INotesReposito
 from quicknote.application.abstractions.repositories.notes_graph import INotesGraphRepository
 from quicknote.application.abstractions.repositories.users import IUsersRepository
 from quicknote.application.interactors.notes.dto import CreateNote
-from quicknote.application.interactors.notes.exceptions import NoteTooLongException, NoteNotFoundException
+from quicknote.application.interactors.notes.exceptions import NoteNotFoundException
 from quicknote.application.interactors.users.exceptions import UserNotFoundException
 from quicknote.domain.entities.note import Note
 from quicknote.domain.services.wikilinks import extract_wikilinks
