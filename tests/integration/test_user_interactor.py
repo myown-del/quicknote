@@ -1,9 +1,9 @@
 import pytest
 from dishka import AsyncContainer
 
-from quicknote.application.interactors import UserInteractor
-from quicknote.application.interactors.users.dto import CreateOrUpdateUser
-from quicknote.infrastructure.db.repositories.hub import RepositoryHub
+from brain.application.interactors import UserInteractor
+from brain.application.interactors.users.dto import CreateOrUpdateUser
+from brain.infrastructure.db.repositories.hub import RepositoryHub
 
 
 @pytest.mark.asyncio

@@ -1,4 +1,4 @@
-.PHONY: venv start start-db build test migration migrate
+.PHONY: venv start start-db start-background build test migration migrate
 
 venv:
 	rm -rf venv
@@ -10,6 +10,9 @@ start:
 
 start-db:
 	docker compose -f docker-compose.yml up postgres -d
+
+start-background:
+	docker compose -f docker-compose.yml up -d --force-recreate --remove-orphans
 
 build:
 	docker compose -f docker-compose.yml build

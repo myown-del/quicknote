@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from quicknote.application.abstractions.config.models import IDatabaseConfig, INeo4jConfig
+from brain.application.abstractions.config.models import IDatabaseConfig, INeo4jConfig
 
 
 @dataclass

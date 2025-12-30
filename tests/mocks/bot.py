@@ -2,7 +2,7 @@ from aiogram import Bot
 from dishka import provide, Scope, Provider
 from aiogram_tests.mocked_bot import MockedBot
 
-from quicknote.config import Config
+from brain.config import Config
 
 
 class MockBotProvider(Provider):

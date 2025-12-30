@@ -1,7 +1,7 @@
 from uuid import UUID
 
-from quicknote.application.abstractions.repositories.notes_graph import INotesGraphRepository
-from quicknote.domain.entities.note import Note
+from brain.application.abstractions.repositories.notes_graph import INotesGraphRepository
+from brain.domain.entities.note import Note
 
 
 class DummyNotesGraphRepository(INotesGraphRepository):

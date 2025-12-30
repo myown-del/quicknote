@@ -1,11 +1,11 @@
 import pytest
 
-from quicknote.application.abstractions.repositories.notes_graph import (
+from brain.application.abstractions.repositories.notes_graph import (
     INotesGraphRepository,
 )
-from quicknote.application.interactors.notes.dto import CreateNote
-from quicknote.application.interactors.notes.interactor import NoteInteractor
-from quicknote.domain.entities.user import User
+from brain.application.interactors.notes.dto import CreateNote
+from brain.application.interactors.notes.interactor import NoteInteractor
+from brain.domain.entities.user import User
 
 
 @pytest.mark.asyncio

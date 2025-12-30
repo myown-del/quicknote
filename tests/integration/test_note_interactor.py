@@ -1,11 +1,11 @@
 import pytest
 from dishka import AsyncContainer
 
-from quicknote.application.interactors import NoteInteractor
-from quicknote.application.interactors.notes.dto import CreateNote
-from quicknote.application.interactors.users.exceptions import UserNotFoundException
-from quicknote.domain.entities.user import User
-from quicknote.infrastructure.db.repositories.hub import RepositoryHub
+from brain.application.interactors import NoteInteractor
+from brain.application.interactors.notes.dto import CreateNote
+from brain.application.interactors.users.exceptions import UserNotFoundException
+from brain.domain.entities.user import User
+from brain.infrastructure.db.repositories.hub import RepositoryHub
 
 
 @pytest.mark.asyncio

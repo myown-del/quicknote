@@ -2,8 +2,8 @@ from datetime import datetime, timedelta
 
 import pytest
 
-from quicknote.application.abstractions.token_verifier import TokenExpiredError
-from quicknote.infrastructure.jwt.service import JwtService
+from brain.application.abstractions.token_verifier import TokenExpiredError
+from brain.infrastructure.jwt.service import JwtService
 
 
 def test_jwt_expiration_calculation(freezer):

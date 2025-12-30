@@ -7,16 +7,16 @@ from alembic.command import upgrade
 from dishka import AsyncContainer, make_async_container
 from alembic.config import Config as AlembicConfig
 
-from quicknote.application.abstractions.config.models import IDatabaseConfig
-from quicknote.application.interactors.factory import InteractorProvider
-from quicknote.config.models import Config
-from quicknote.config.parser import load_config
-from quicknote.config.provider import ConfigProvider
-from quicknote.domain.entities.user import User
-from quicknote.infrastructure.db.provider import DatabaseProvider
-from quicknote.infrastructure.db.repositories.hub import RepositoryHub
-from quicknote.infrastructure.graph.provider import Neo4jProvider
-from quicknote.infrastructure.jwt.provider import JwtProvider
+from brain.application.abstractions.config.models import IDatabaseConfig
+from brain.application.interactors.factory import InteractorProvider
+from brain.config.models import Config
+from brain.config.parser import load_config
+from brain.config.provider import ConfigProvider
+from brain.domain.entities.user import User
+from brain.infrastructure.db.provider import DatabaseProvider
+from brain.infrastructure.db.repositories.hub import RepositoryHub
+from brain.infrastructure.graph.provider import Neo4jProvider
+from brain.infrastructure.jwt.provider import JwtProvider
 from tests.fixtures.db_provider import TestDbProvider
 from tests.fixtures.graph_provider import TestNeo4jConfigProvider
 
@@ -26,7 +26,7 @@ async def alembic_config(dishka: AsyncContainer) -> AlembicConfig:
     alembic_cfg = AlembicConfig("alembic.ini")
     alembic_cfg.set_main_option(
         "script_location",
-        str(Path("quicknote") / "infrastructure" / "migrations"),
+        str(Path("brain") / "infrastructure" / "migrations"),
     )
     db_config = await dishka.get(IDatabaseConfig)
     alembic_cfg.set_main_option("sqlalchemy.url", db_config.uri)

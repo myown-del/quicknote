@@ -4,8 +4,8 @@ import os
 from dishka import Provider, Scope, provide
 from testcontainers.postgres import PostgresContainer
 
-from quicknote.application.abstractions.config.models import IDatabaseConfig
-from quicknote.config.models import Config
+from brain.application.abstractions.config.models import IDatabaseConfig
+from brain.config.models import Config
 from tests.mocks.config import DatabaseConfig
 
 logger = logging.getLogger(__name__)

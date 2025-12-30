@@ -2,9 +2,9 @@ import os
 
 from dishka import Provider, Scope, provide
 
-from quicknote.application.abstractions.config.models import INeo4jConfig
-from quicknote.application.abstractions.repositories.notes_graph import INotesGraphRepository
-from quicknote.config.models import Config
+from brain.application.abstractions.config.models import INeo4jConfig
+from brain.application.abstractions.repositories.notes_graph import INotesGraphRepository
+from brain.config.models import Config
 from tests.mocks.config import Neo4jConfig
 from tests.mocks.notes_graph_repo import DummyNotesGraphRepository
 

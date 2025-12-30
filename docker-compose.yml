@@ -1,18 +1,17 @@
 version: "3"
 
-name: quicknote
+name: brain
 services:
-  bot:
+  app:
     restart: always
     env_file:
       - .env
     build: .
     volumes:
-      - "./quicknote:/quicknote"
+      - "./brain:/brain"
     ports:
       - "8080:8080"
-    entrypoint:
-      [ "python", "-m", "quicknote" ]
+    command: sh -c "python -m brain.main.entrypoints.setup_tasks && python -m brain.main.entrypoints.api"
 
   postgres:
     image: postgres:13
@@ -23,7 +22,7 @@ services:
     ports:
       - "5432:5432"
 #    volumes:
-#      - quicknote-data:/var/lib/postgresql/data
+#      - brain-data:/var/lib/postgresql/data
 
   redis:
     image: redis:6
