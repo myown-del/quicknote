@@ -16,11 +16,9 @@ from quicknote.application.abstractions.token_verifier import (
 from quicknote.application.abstractions.repositories.jwt import (
     IJwtRefreshTokensRepository,
 )
-from aiogram.utils.auth_widget import check_signature as check_widget_auth_signature
 
 from quicknote.config.models import BotConfig, AuthenticationConfig
-from quicknote.domain.entities.jwt import JwtToken, JwtTokens
-from quicknote.domain.entities.jwt_refresh_token import JwtRefreshToken
+from quicknote.domain.entities.jwt import JwtToken, JwtTokens, JwtRefreshToken
 from quicknote.domain.entities.user import User
 
 
@@ -38,12 +36,6 @@ class AuthInteractor:
         self._auth_config = auth_config
         self._jwt_service = jwt_service
         self._jwt_repo = jwt_repo
-
-    async def check_auth_widget_hash(self, body: dict) -> bool:
-        return check_widget_auth_signature(
-            self._bot_config.token,
-            **body
-        )
 
     def _create_jwt_token(
         self,

@@ -11,7 +11,7 @@ from quicknote.infrastructure.db.mappers.tg_bot_auth import (
     map_telegram_bot_auth_session_to_db,
     map_telegram_bot_auth_session_to_dm,
 )
-from quicknote.infrastructure.db.models.telegram_bot_auth_session import (
+from quicknote.infrastructure.db.models.tg_bot_auth import (
     TelegramBotAuthSessionDB,
 )
 

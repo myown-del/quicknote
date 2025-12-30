@@ -1,5 +1,5 @@
-from quicknote.domain.entities.jwt_refresh_token import JwtRefreshToken
-from quicknote.infrastructure.db.models.jwt_refresh_token import JwtRefreshTokenDB
+from quicknote.domain.entities.jwt import JwtRefreshToken
+from quicknote.infrastructure.db.models.jwt import JwtRefreshTokenDB
 
 
 def map_jwt_refresh_token_to_dm(token: JwtRefreshTokenDB) -> JwtRefreshToken:
