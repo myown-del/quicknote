@@ -11,4 +11,4 @@ class JwtTokenCreationPayload:
 @dataclass
 class DecodedJwtTokenPayload:
     user_id: UUID
-    expires_at: datetime
+    exp: datetime

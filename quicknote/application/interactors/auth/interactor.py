@@ -1,14 +1,16 @@
 from dataclasses import asdict
 
-from jwt import ExpiredSignatureError
-
 from quicknote.application.interactors import UserInteractor
 from quicknote.application.interactors.auth.dto import (
     JwtTokenCreationPayload,
     DecodedJwtTokenPayload,
 )
-from quicknote.application.interactors.auth.exceptions import JwtTokenExpiredException
-from quicknote.application.services.jwt import JwtService
+from quicknote.application.interactors.auth.exceptions import JwtTokenExpiredException, JwtTokenInvalidException
+from quicknote.application.abstractions.token_verifier import (
+    TokenVerifier,
+    TokenExpiredError,
+    TokenInvalidError,
+)
 from aiogram.utils.auth_widget import check_signature as check_widget_auth_signature
 
 from quicknote.config.models import BotConfig
@@ -21,7 +23,7 @@ class AuthInteractor:
         self,
         user_interactor: UserInteractor,
         bot_config: BotConfig,
-        jwt_service: JwtService,
+        jwt_service: TokenVerifier,
     ):
         self._user_interactor = user_interactor
         self._bot_config = bot_config
@@ -29,8 +31,7 @@ class AuthInteractor:
 
     async def check_auth_widget_hash(self, body: dict) -> bool:
         return check_widget_auth_signature(
-            token=self._bot_config.token,
-            hash=str(body.get("hash")),
+            self._bot_config.token,
             **body
         )
 
@@ -45,8 +46,10 @@ class AuthInteractor:
     def _decode_jwt_token(self, token: str) -> DecodedJwtTokenPayload:
         try:
             data = self._jwt_service.decode_token(token)
-        except ExpiredSignatureError:
+        except TokenExpiredError:
             raise JwtTokenExpiredException()
+        except TokenInvalidError:
+            raise JwtTokenInvalidException()
 
         jwt_token_payload = DecodedJwtTokenPayload(**data)
         return jwt_token_payload

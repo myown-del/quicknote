@@ -4,11 +4,10 @@ import pytest
 import pytest_asyncio
 from dishka import make_async_container
 
-from quicknote.application.interactors.factory import InteractorProvider
-from quicknote.config.di import ConfigProvider
+from quicknote.config.provider import ConfigProvider
 from quicknote.config.models import Config
 from quicknote.config.parser import load_config
-from quicknote.infrastructure.db.factory import DatabaseProvider
+from quicknote.infrastructure.db.provider import DatabaseProvider
 from tests.fixtures.db_provider import TestDbProvider
 
 
@@ -24,6 +23,9 @@ def event_loop():
 
 @pytest_asyncio.fixture(scope="session")
 async def dishka():
+    from quicknote.application.interactors.factory import InteractorProvider
+    from quicknote.infrastructure.jwt.provider import JwtProvider
+
     config = load_config(
         config_class=Config,
         env_file_path="tests/.env"
@@ -33,6 +35,7 @@ async def dishka():
         TestDbProvider(),
         DatabaseProvider(),
         InteractorProvider(),
+        JwtProvider(),
         context={Config: config}
     )
     yield container

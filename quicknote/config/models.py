@@ -53,6 +53,8 @@ class EnvironmentType(Enum):
 
 @dataclass
 class AuthenticationConfig:
+    admin_token: str
+    # JWT settings
     secret_key: str
     access_token_lifetime: int = 3600
     refresh_token_lifetime: int = 86400

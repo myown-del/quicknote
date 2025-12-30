@@ -1,19 +1,18 @@
 import logging
 from functools import partial
 
-from aiogram import Bot
 from dishka import make_async_container, AsyncContainer
 from dishka.integrations import fastapi as fastapi_integration
 from fastapi import FastAPI
 
-from quicknote.application.services.factory import ServiceProvider
-from quicknote.config.di import ConfigProvider, DatabaseConfigProvider
+from quicknote.config.provider import ConfigProvider, DatabaseConfigProvider
 from quicknote.config.models import APIConfig, Config
 from quicknote.config.parser import load_config
+from quicknote.infrastructure.jwt.provider import JwtProvider
 from quicknote.log import setup_logging
 from quicknote.presentation.api.factory import create_bare_app
-from quicknote.presentation.tgbot.factory import DispatcherProvider, BotProvider
-from quicknote.infrastructure.db.factory import DatabaseProvider
+from quicknote.presentation.tgbot.provider import DispatcherProvider, BotProvider
+from quicknote.infrastructure.db.provider import DatabaseProvider
 from quicknote.application.interactors.factory import InteractorProvider
 
 logger = logging.getLogger(__name__)
@@ -43,7 +42,7 @@ def create_app() -> FastAPI:
         DatabaseConfigProvider(),
         DatabaseProvider(),
         InteractorProvider(),
-        ServiceProvider(),
+        JwtProvider(),
         DispatcherProvider(),
         context={Config: config}
     )

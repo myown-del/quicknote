@@ -25,3 +25,7 @@ class INotesRepository(Protocol):
     @abstractmethod
     async def delete_all(self):
         raise NotImplementedError
+
+    @abstractmethod
+    async def delete_by_id(self, entity_id: UUID):
+        raise NotImplementedError

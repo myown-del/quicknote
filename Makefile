@@ -1,4 +1,4 @@
-.PHONY: venv start start-db build
+.PHONY: venv start start-db build test migration migrate
 
 venv:
 	rm -rf venv
@@ -16,3 +16,9 @@ build:
 
 test:
 	pytest tests --disable-warnings -s
+
+migration:
+	alembic revision --autogenerate
+
+migrate:
+	alembic upgrade head

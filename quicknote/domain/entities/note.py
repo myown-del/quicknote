@@ -11,8 +11,9 @@ class NoteDM(Entity):
     Note domain model
     """
 
-    id: UUID
+    id: UUID | None
     user_id: UUID
-    text: str
+    title: str | None
+    text: str | None
     created_at: datetime = field(default_factory=datetime.utcnow)
     updated_at: datetime = field(default_factory=datetime.utcnow)

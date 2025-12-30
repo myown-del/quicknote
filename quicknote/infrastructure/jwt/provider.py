@@ -1,14 +1,15 @@
 from dishka import Provider, Scope, provide
 
-from quicknote.application.services.jwt import JwtService
+from quicknote.application.abstractions.token_verifier import TokenVerifier
 from quicknote.config.models import AuthenticationConfig
+from quicknote.infrastructure.jwt.service import JwtService
 
 
-class ServiceProvider(Provider):
+class JwtProvider(Provider):
     scope = Scope.APP
 
     @provide
-    def get_jwt_service(self, config: AuthenticationConfig) -> JwtService:
+    def get_token_verifier(self, config: AuthenticationConfig) -> TokenVerifier:
         return JwtService(
             secret_key=config.secret_key,
             access_token_lifetime=config.access_token_lifetime,

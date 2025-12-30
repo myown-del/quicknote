@@ -2,7 +2,6 @@ from uuid import UUID
 
 from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
 
 from quicknote.application.abstractions.repositories.notes import INotesRepository
 from quicknote.domain.entities.note import NoteDM
@@ -43,4 +42,14 @@ class NotesRepository(INotesRepository):
 
     async def delete_all(self):
         await self._session.execute(text("DELETE FROM notes"))
+        await self._session.commit()
+
+    async def delete_by_id(self, entity_id: UUID):
+        query = (
+            select(Note)
+            .where(Note.id == entity_id)
+        )
+        result = await self._session.execute(query)
+        db_model = result.scalar()
+        await self._session.delete(db_model)
         await self._session.commit()
