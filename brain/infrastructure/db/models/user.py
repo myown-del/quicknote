@@ -17,3 +17,4 @@ class UserDB(Base, CreatedUpdatedMixin):
     last_name: Mapped[str | None] = mapped_column(String, nullable=True)
 
     notes = relationship("NoteDB", back_populates="user", lazy="selectin")
+    keywords = relationship("KeywordDB", back_populates="user", lazy="selectin")

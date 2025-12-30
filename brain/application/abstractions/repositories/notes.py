@@ -3,6 +3,7 @@ from typing import Protocol
 from uuid import UUID
 
 from brain.domain.entities.note import Note
+from brain.application.interactors.notes.dto import WikilinkSuggestion
 
 
 class INotesRepository(Protocol):
@@ -32,4 +33,21 @@ class INotesRepository(Protocol):
 
     @abstractmethod
     async def delete_by_id(self, entity_id: UUID):
+        raise NotImplementedError
+
+    @abstractmethod
+    async def count_keyword_notes_by_user_and_title(
+        self,
+        user_id: UUID,
+        title: str,
+        exclude_note_id: UUID | None = None,
+    ) -> int:
+        raise NotImplementedError
+
+    @abstractmethod
+    async def search_wikilink_suggestions(
+        self,
+        user_id: UUID,
+        query: str,
+    ) -> list[WikilinkSuggestion]:
         raise NotImplementedError

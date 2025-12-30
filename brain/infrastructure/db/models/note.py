@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from uuid import UUID
 
-from sqlalchemy import Uuid, String, Column, ForeignKey
+from sqlalchemy import Uuid, String, Column, ForeignKey, Boolean, text as sa_text
 from sqlalchemy.orm import mapped_column, Mapped, relationship
 
 from brain.infrastructure.db.models.base import Base
@@ -20,5 +20,22 @@ class NoteDB(Base, CreatedUpdatedMixin):
     )
     title: Mapped[str | None] = mapped_column(String(length=255), nullable=True)
     text: Mapped[str | None] = mapped_column(String(length=4096), nullable=True)
+    represents_keyword: Mapped[bool] = mapped_column(
+        Boolean,
+        nullable=False,
+        default=False,
+        server_default=sa_text("false"),
+    )
 
     user = relationship("UserDB", back_populates="notes", lazy="selectin")
+    note_keywords = relationship(
+        "NoteKeywordDB",
+        back_populates="note",
+        cascade="all, delete-orphan",
+    )
+    keywords = relationship(
+        "KeywordDB",
+        secondary="note_keywords",
+        back_populates="notes",
+        lazy="selectin",
+    )

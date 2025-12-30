@@ -3,18 +3,23 @@ from uuid import UUID
 
 from dishka import FromDishka
 from dishka.integrations.fastapi import inject
-from fastapi import Depends, APIRouter, HTTPException
+from fastapi import Depends, APIRouter, HTTPException, Query
 from starlette import status
 
 from brain.application.interactors import NoteInteractor
 from brain.application.interactors.notes.dto import CreateNote, UpdateNote
-from brain.application.interactors.notes.exceptions import NoteNotFoundException
+from brain.application.interactors.notes.exceptions import (
+    NoteNotFoundException,
+    KeywordNoteTitleRequiredException,
+    KeywordNoteAlreadyExistsException,
+)
 from brain.domain.entities.user import User
 from brain.presentation.api.dependencies.auth import get_user_from_request
 from brain.presentation.api.routes.notes.models import (
     ReadNoteSchema,
     CreateNoteSchema,
     UpdateNoteSchema,
+    WikilinkSuggestionSchema,
 )
 
 
@@ -31,6 +36,22 @@ async def get_notes(
 
 
 @inject
+async def get_wikilink_suggestions(
+        interactor: FromDishka[NoteInteractor],
+        query: str = Query(..., min_length=1),
+        user: User = Depends(get_user_from_request),
+):
+    suggestions = await interactor.search_wikilink_suggestions(
+        user_id=user.id,
+        query=query,
+    )
+    return [
+        WikilinkSuggestionSchema.model_validate(asdict(suggestion))
+        for suggestion in suggestions
+    ]
+
+
+@inject
 async def create_note(
         interactor: FromDishka[NoteInteractor],
         note: CreateNoteSchema,
@@ -39,9 +60,21 @@ async def create_note(
     data = CreateNote(
         by_user_telegram_id=user.telegram_id,
         title=note.title,
-        text=note.text
+        text=note.text,
+        represents_keyword=note.represents_keyword,
     )
-    note_id = await interactor.create_note(data)
+    try:
+        note_id = await interactor.create_note(data)
+    except KeywordNoteTitleRequiredException:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Keyword note requires a title",
+        )
+    except KeywordNoteAlreadyExistsException:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Keyword note with this title already exists",
+        )
     note = await interactor.get_note_by_id(note_id)
     return ReadNoteSchema.model_validate(asdict(note))
 
@@ -99,6 +132,10 @@ async def update_note(
         note_id=note_id,
         title=payload.get("title", existing_note.title),
         text=payload.get("text", existing_note.text),
+        represents_keyword=payload.get(
+            "represents_keyword",
+            existing_note.represents_keyword,
+        ),
     )
 
     try:
@@ -107,6 +144,16 @@ async def update_note(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Note not found"
+        )
+    except KeywordNoteTitleRequiredException:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Keyword note requires a title",
+        )
+    except KeywordNoteAlreadyExistsException:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Keyword note with this title already exists",
         )
 
     return ReadNoteSchema.model_validate(asdict(updated_note))
@@ -120,6 +167,14 @@ def get_router() -> APIRouter:
         methods=["GET"],
         response_model=list[ReadNoteSchema],
         summary="Get user notes",
+        status_code=status.HTTP_200_OK
+    )
+    router.add_api_route(
+        path='/wikilink-suggestions',
+        endpoint=get_wikilink_suggestions,
+        methods=["GET"],
+        response_model=list[WikilinkSuggestionSchema],
+        summary="Search wikilink suggestions",
         status_code=status.HTTP_200_OK
     )
     router.add_api_route(

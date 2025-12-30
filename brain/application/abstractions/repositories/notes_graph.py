@@ -11,7 +11,13 @@ class INotesGraphRepository(Protocol):
         raise NotImplementedError
 
     @abstractmethod
-    async def sync_connections(self, note: Note, link_titles: list[str]):
+    async def sync_connections(
+        self,
+        note: Note,
+        link_targets: list[str],
+        previous_title: str | None = None,
+        previous_represents_keyword: bool | None = None,
+    ):
         raise NotImplementedError
 
     @abstractmethod

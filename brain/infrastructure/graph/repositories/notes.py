@@ -14,7 +14,8 @@ class NotesGraphRepository(INotesGraphRepository):
     async def upsert_note(self, note: Note):
         query = (
             "MERGE (n:Note {id: $id}) "
-            "SET n.user_id = $user_id, n.title = $title, n.text = $text"
+            "SET n.user_id = $user_id, n.title = $title, n.text = $text, "
+            "n.represents_keyword = $represents_keyword"
         )
         async with self._driver.session(database=self._database) as session:
             await session.run(
@@ -23,29 +24,68 @@ class NotesGraphRepository(INotesGraphRepository):
                 user_id=str(note.user_id),
                 title=note.title,
                 text=note.text,
+                represents_keyword=note.represents_keyword,
             )
 
-    async def sync_connections(self, note: Note, link_titles: list[str]):
+    async def sync_connections(
+        self,
+        note: Note,
+        link_targets: list[str],
+        previous_title: str | None = None,
+        previous_represents_keyword: bool | None = None,
+    ):
         async with self._driver.session(database=self._database) as session:
             await session.run(
                 "MATCH (n:Note {id: $id}) "
-                "OPTIONAL MATCH (n)-[r:LINKS_TO]->() "
+                "OPTIONAL MATCH (n)-[r:LINKS_TO|HAS_KEYWORD]->() "
                 "DELETE r",
                 id=str(note.id),
             )
 
-            if not link_titles:
-                return
+            if previous_represents_keyword and (
+                not note.represents_keyword or previous_title != note.title
+            ):
+                await session.run(
+                    "MATCH (source:Note)-[r:LINKS_TO]->(target:Note {id: $id}) "
+                    "MATCH (source)-[:HAS_KEYWORD]->(:Keyword {user_id: $user_id, name: $prev_title}) "
+                    "DELETE r",
+                    id=str(note.id),
+                    user_id=str(note.user_id),
+                    prev_title=previous_title,
+                )
 
-            await session.run(
-                "MATCH (source:Note {id: $id}) "
-                "UNWIND $titles AS title "
-                "MATCH (target:Note {user_id: $user_id, title: title}) "
-                "MERGE (source)-[:LINKS_TO]->(target)",
-                id=str(note.id),
-                user_id=str(note.user_id),
-                titles=link_titles,
-            )
+            if link_targets:
+                await session.run(
+                    "MATCH (source:Note {id: $id}) "
+                    "UNWIND $targets AS target "
+                    "MERGE (k:Keyword {user_id: $user_id, name: target}) "
+                    "MERGE (source)-[:HAS_KEYWORD]->(k)",
+                    id=str(note.id),
+                    user_id=str(note.user_id),
+                    targets=link_targets,
+                )
+
+                await session.run(
+                    "MATCH (source:Note {id: $id}) "
+                    "UNWIND $targets AS target "
+                    "MATCH (target_note:Note {user_id: $user_id, title: target, represents_keyword: true}) "
+                    "MERGE (source)-[:LINKS_TO]->(target_note)",
+                    id=str(note.id),
+                    user_id=str(note.user_id),
+                    targets=link_targets,
+                )
+
+            if note.title and note.represents_keyword:
+                await session.run(
+                    "MATCH (target:Note {id: $id}) "
+                    "MATCH (k:Keyword {user_id: $user_id, name: $title}) "
+                    "MATCH (source:Note)-[:HAS_KEYWORD]->(k) "
+                    "WHERE source.id <> target.id "
+                    "MERGE (source)-[:LINKS_TO]->(target)",
+                    id=str(note.id),
+                    user_id=str(note.user_id),
+                    title=note.title,
+                )
 
     async def delete_note(self, note_id: UUID):
         async with self._driver.session(database=self._database) as session:
@@ -71,10 +111,11 @@ class NotesGraphRepository(INotesGraphRepository):
     ) -> int:
         async with self._driver.session(database=self._database) as session:
             result = await session.run(
-                "MATCH (:Note {user_id: $user_id, title: $from_title})"
-                "-[:LINKS_TO]->"
-                "(:Note {user_id: $user_id, title: $to_title}) "
-                "RETURN count(*) AS c",
+                "MATCH (from:Note {user_id: $user_id, title: $from_title}) "
+                "MATCH (to:Note {user_id: $user_id, title: $to_title}) "
+                "OPTIONAL MATCH (from)-[direct:LINKS_TO]->(to) "
+                "OPTIONAL MATCH (from)-[:HAS_KEYWORD]->(k:Keyword)<-[:HAS_KEYWORD]-(to) "
+                "RETURN count(DISTINCT direct) + count(DISTINCT k) AS c",
                 user_id=str(user_id),
                 from_title=from_title,
                 to_title=to_title,

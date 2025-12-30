@@ -6,12 +6,12 @@ from brain.domain.entities.common import Entity
 
 
 @dataclass
-class NoteConnection(Entity):
+class NoteKeyword(Entity):
     """
-    Connection between notes based on titles and keywords.
+    Link between a note and a keyword.
     """
 
-    from_note_id: UUID
-    to_note_id: UUID
+    note_id: UUID
+    keyword_id: UUID
     user_id: UUID
     created_at: datetime | None = None

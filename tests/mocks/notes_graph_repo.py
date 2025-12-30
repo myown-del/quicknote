@@ -8,7 +8,13 @@ class DummyNotesGraphRepository(INotesGraphRepository):
     async def upsert_note(self, note: Note):
         return None
 
-    async def sync_connections(self, note: Note, link_titles: list[str]):
+    async def sync_connections(
+        self,
+        note: Note,
+        link_targets: list[str],
+        previous_title: str | None = None,
+        previous_represents_keyword: bool | None = None,
+    ):
         return None
 
     async def delete_note(self, note_id: UUID):

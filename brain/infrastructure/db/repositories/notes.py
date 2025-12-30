@@ -1,12 +1,14 @@
 from datetime import datetime
 from uuid import UUID
 
-from sqlalchemy import select, text
+from sqlalchemy import select, text, func, exists
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from brain.application.abstractions.repositories.notes import INotesRepository
+from brain.application.interactors.notes.dto import WikilinkSuggestion
 from brain.domain.entities.note import Note
 from brain.infrastructure.db.mappers.notes import map_note_to_db, map_note_to_dm
+from brain.infrastructure.db.models.keyword import KeywordDB
 from brain.infrastructure.db.models.note import NoteDB
 from brain.infrastructure.db.models.user import UserDB
 
@@ -53,6 +55,7 @@ class NotesRepository(INotesRepository):
             return
         db_model.title = entity.title
         db_model.text = entity.text
+        db_model.represents_keyword = entity.represents_keyword
         db_model.updated_at = entity.updated_at or datetime.utcnow()
         await self._session.commit()
 
@@ -69,3 +72,89 @@ class NotesRepository(INotesRepository):
         db_model = result.scalar()
         await self._session.delete(db_model)
         await self._session.commit()
+
+    async def count_keyword_notes_by_user_and_title(
+        self,
+        user_id: UUID,
+        title: str,
+        exclude_note_id: UUID | None = None,
+    ) -> int:
+        query = (
+            select(func.count())
+            .select_from(NoteDB)
+            .where(NoteDB.user_id == user_id)
+            .where(NoteDB.title == title)
+            .where(NoteDB.represents_keyword.is_(True))
+        )
+        if exclude_note_id:
+            query = query.where(NoteDB.id != exclude_note_id)
+        result = await self._session.execute(query)
+        return int(result.scalar() or 0)
+
+    async def search_wikilink_suggestions(
+        self,
+        user_id: UUID,
+        query: str,
+    ) -> list[WikilinkSuggestion]:
+        normalized_query = query.strip().lower()
+        if not normalized_query:
+            return []
+
+        keyword_note_stmt = (
+            select(NoteDB.title)
+            .where(NoteDB.user_id == user_id)
+            .where(NoteDB.represents_keyword.is_(True))
+            .where(NoteDB.title.isnot(None))
+            .where(func.length(func.trim(NoteDB.title)) > 0)
+            .where(func.lower(NoteDB.title).like(f"%{normalized_query}%"))
+            .order_by(NoteDB.title.asc())
+        )
+        keyword_result = await self._session.execute(keyword_note_stmt)
+
+        seen: set[str] = set()
+        suggestions: list[WikilinkSuggestion] = []
+
+        for (title,) in keyword_result.all():
+            if title is None:
+                continue
+            trimmed = title.strip()
+            if not trimmed or trimmed in seen:
+                continue
+            seen.add(trimmed)
+            suggestions.append(
+                WikilinkSuggestion(
+                    title=trimmed,
+                    represents_keyword=True,
+                )
+            )
+
+        missing_note_stmt = (
+            select(KeywordDB.name)
+            .where(KeywordDB.user_id == user_id)
+            .where(KeywordDB.name.isnot(None))
+            .where(func.length(func.trim(KeywordDB.name)) > 0)
+            .where(func.lower(KeywordDB.name).like(f"%{normalized_query}%"))
+            .where(
+                ~exists()
+                .where(NoteDB.user_id == KeywordDB.user_id)
+                .where(NoteDB.title == KeywordDB.name)
+                .where(NoteDB.represents_keyword.is_(True))
+            )
+            .order_by(KeywordDB.name.asc())
+        )
+        missing_note_result = await self._session.execute(missing_note_stmt)
+
+        for (name,) in missing_note_result.all():
+            if name is None:
+                continue
+            trimmed = name.strip()
+            if not trimmed or trimmed in seen:
+                continue
+            seen.add(trimmed)
+            suggestions.append(
+                WikilinkSuggestion(
+                    title=trimmed,
+                    represents_keyword=False,
+                )
+            )
+        return suggestions
