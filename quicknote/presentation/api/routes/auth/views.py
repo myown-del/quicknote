@@ -8,7 +8,7 @@ from quicknote.application.interactors.auth.exceptions import JwtTokenExpiredExc
 from quicknote.application.interactors.auth.interactor import AuthInteractor
 from quicknote.application.interactors.users.exceptions import UserNotFoundException
 from quicknote.config.models import AuthenticationConfig
-from quicknote.domain.entities.user import UserDM
+from quicknote.domain.entities.user import User
 from quicknote.presentation.api.dependencies.auth import get_user_from_request
 from quicknote.presentation.api.routes.auth.models import JwtTokenSchema, FakeAuthSchema
 
@@ -74,7 +74,7 @@ async def fake_auth(
 @inject
 async def refresh_token(
         auth_interactor: FromDishka[AuthInteractor],
-        user: UserDM = Depends(get_user_from_request),
+        user: User = Depends(get_user_from_request),
 ):
     token = await auth_interactor.login(user.telegram_id)
     return JwtTokenSchema.model_validate(asdict(token))

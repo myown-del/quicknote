@@ -1,6 +1,6 @@
 from dishka import Provider, Scope, provide, from_context
 
-from quicknote.application.abstractions.config.models import IDatabaseConfig
+from quicknote.application.abstractions.config.models import IDatabaseConfig, INeo4jConfig
 from quicknote.config.models import APIConfig, Config, BotConfig, AuthenticationConfig, RedisConfig
 
 
@@ -27,6 +27,10 @@ class DatabaseConfigProvider(Provider):
     @provide
     def get_db_config(self, config: Config) -> IDatabaseConfig:
         return config.db
+
+    @provide
+    def get_neo4j_config(self, config: Config) -> INeo4jConfig:
+        return config.neo4j
 
     @provide
     def get_redis_config(self, config: Config) -> RedisConfig:

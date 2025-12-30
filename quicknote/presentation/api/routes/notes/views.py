@@ -9,7 +9,7 @@ from starlette import status
 from quicknote.application.interactors import NoteInteractor
 from quicknote.application.interactors.notes.dto import CreateNote
 from quicknote.application.interactors.notes.exceptions import NoteNotFoundException
-from quicknote.domain.entities.user import UserDM
+from quicknote.domain.entities.user import User
 from quicknote.presentation.api.dependencies.auth import get_user_from_request
 from quicknote.presentation.api.routes.notes.models import ReadNoteSchema, CreateNoteSchema
 
@@ -17,7 +17,7 @@ from quicknote.presentation.api.routes.notes.models import ReadNoteSchema, Creat
 @inject
 async def get_notes(
         interactor: FromDishka[NoteInteractor],
-        user: UserDM = Depends(get_user_from_request),
+        user: User = Depends(get_user_from_request),
 ):
     notes = await interactor.get_notes(user.telegram_id)
     return [
@@ -30,7 +30,7 @@ async def get_notes(
 async def create_note(
         interactor: FromDishka[NoteInteractor],
         note: CreateNoteSchema,
-        user: UserDM = Depends(get_user_from_request),
+        user: User = Depends(get_user_from_request),
 ):
     data = CreateNote(
         by_user_telegram_id=user.telegram_id,
@@ -46,7 +46,7 @@ async def create_note(
 async def delete_note(
         interactor: FromDishka[NoteInteractor],
         note_id: UUID,
-        user: UserDM = Depends(get_user_from_request),
+        user: User = Depends(get_user_from_request),
 ):
     note = await interactor.get_note_by_id(note_id)
     if not note:

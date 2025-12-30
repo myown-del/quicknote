@@ -1,11 +1,13 @@
 from uuid import uuid4, UUID
 
 from quicknote.application.abstractions.repositories.notes import INotesRepository
+from quicknote.application.abstractions.repositories.notes_graph import INotesGraphRepository
 from quicknote.application.abstractions.repositories.users import IUsersRepository
 from quicknote.application.interactors.notes.dto import CreateNote
 from quicknote.application.interactors.notes.exceptions import NoteTooLongException, NoteNotFoundException
 from quicknote.application.interactors.users.exceptions import UserNotFoundException
-from quicknote.domain.entities.note import NoteDM
+from quicknote.domain.entities.note import Note
+from quicknote.domain.services.wikilinks import extract_wikilinks
 
 
 class NoteInteractor:
@@ -13,9 +15,11 @@ class NoteInteractor:
             self,
             notes_repo: INotesRepository,
             users_repo: IUsersRepository,
+            notes_graph_repo: INotesGraphRepository,
     ):
         self._notes_repo = notes_repo
         self._users_repo = users_repo
+        self._notes_graph_repo = notes_graph_repo
 
     async def create_note(self, note_data: CreateNote) -> UUID:
         user = await self._users_repo.get_by_telegram_id(
@@ -24,21 +28,24 @@ class NoteInteractor:
         if not user:
             raise UserNotFoundException()
 
-        note = NoteDM(
+        note = Note(
             id=uuid4(),
             user_id=user.id,
             title=note_data.title,
             text=note_data.text
         )
         await self._notes_repo.create(note)
+        await self._notes_graph_repo.upsert_note(note)
+        link_titles = extract_wikilinks(note.text or "")
+        await self._notes_graph_repo.sync_connections(note, link_titles)
 
         return note.id
 
-    async def get_notes(self, user_telegram_id: int) -> list[NoteDM]:
+    async def get_notes(self, user_telegram_id: int) -> list[Note]:
         notes = await self._notes_repo.get_by_user_telegram_id(user_telegram_id)
         return notes
 
-    async def get_note_by_id(self, note_id: UUID) -> NoteDM | None:
+    async def get_note_by_id(self, note_id: UUID) -> Note | None:
         note = await self._notes_repo.get_by_id(note_id)
         return note
 
@@ -48,3 +55,4 @@ class NoteInteractor:
             raise NoteNotFoundException()
 
         await self._notes_repo.delete_by_id(note_id)
+        await self._notes_graph_repo.delete_note(note_id)

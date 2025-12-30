@@ -29,3 +29,11 @@ services:
     image: redis:6
     ports:
       - "6379:6379"
+
+  neo4j:
+    image: neo4j:5
+    environment:
+      NEO4J_AUTH: "neo4j/neo4j"
+    ports:
+      - "7474:7474"
+      - "7687:7687"

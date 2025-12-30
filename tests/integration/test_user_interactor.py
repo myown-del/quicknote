@@ -24,4 +24,5 @@ async def test_user_creation(dishka_request: AsyncContainer, repo_hub: Repositor
     assert user.username == data.username
     assert user.first_name == data.first_name
     assert user.last_name == data.last_name
-
+    assert user.created_at is not None
+    assert user.updated_at is not None

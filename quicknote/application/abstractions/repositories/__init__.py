@@ -1,0 +1,3 @@
+from quicknote.application.abstractions.repositories.notes import INotesRepository
+from quicknote.application.abstractions.repositories.notes_graph import INotesGraphRepository
+from quicknote.application.abstractions.repositories.users import IUsersRepository

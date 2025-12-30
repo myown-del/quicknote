@@ -1,1 +1,2 @@
-# Quicknote - Telegram bot that will save your notes
+# MyBrain - Graph-based notes app
+

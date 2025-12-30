@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from enum import Enum
 
-from quicknote.application.abstractions.config.models import IDatabaseConfig
+from quicknote.application.abstractions.config.models import IDatabaseConfig, INeo4jConfig
 
 
 @dataclass
@@ -41,6 +41,20 @@ class RedisConfig:
 
 
 @dataclass
+class Neo4jConfig(INeo4jConfig):
+    host: str
+    port: int
+    user: str
+    password: str
+    database: str = "neo4j"
+    scheme: str = "neo4j"
+
+    @property
+    def uri(self) -> str:
+        return f"{self.scheme}://{self.host}:{self.port}"
+
+
+@dataclass
 class BotConfig:
     token: str
 
@@ -67,5 +81,6 @@ class Config:
     auth: AuthenticationConfig
     db: DatabaseConfig
     redis: RedisConfig
+    neo4j: Neo4jConfig
     bot: BotConfig
     environment: EnvironmentType

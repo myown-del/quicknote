@@ -14,4 +14,10 @@ DB__USER=postgres
 DB__PASSWORD=postgres
 DB__DATABASE=postgres
 
+NEO4J__HOST=neo4j
+NEO4J__PORT=7687
+NEO4J__USER=neo4j
+NEO4J__PASSWORD=neo4j
+NEO4J__DATABASE=neo4j
+
 BOT__TOKEN=xxxxxxxxxxxxxx:xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx

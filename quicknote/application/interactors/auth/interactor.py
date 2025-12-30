@@ -15,7 +15,7 @@ from aiogram.utils.auth_widget import check_signature as check_widget_auth_signa
 
 from quicknote.config.models import BotConfig
 from quicknote.domain.entities.jwt import JwtToken
-from quicknote.domain.entities.user import UserDM
+from quicknote.domain.entities.user import User
 
 
 class AuthInteractor:
@@ -62,7 +62,7 @@ class AuthInteractor:
             )
         )
 
-    async def authorize_by_token(self, token: str) -> UserDM:
+    async def authorize_by_token(self, token: str) -> User:
         payload = self._decode_jwt_token(token)
         user = await self._user_interactor.get_user_by_id(payload.user_id)
         return user

@@ -6,15 +6,15 @@ from quicknote.domain.entities.common import Entity
 
 
 @dataclass
-class UserDM(Entity):
+class User(Entity):
     """
     User domain model
     """
 
-    id: UUID
+    id: UUID | None = field(default=None, kw_only=True)
     telegram_id: int
-    username: str | None
+    username: str | None = field(default=None, kw_only=True)
     first_name: str
-    last_name: str | None
-    created_at: datetime = field(default_factory=datetime.utcnow)
-    updated_at: datetime = field(default_factory=datetime.utcnow)
+    last_name: str | None = field(default=None, kw_only=True)
+    created_at: datetime | None = field(default=None, kw_only=True)
+    updated_at: datetime | None = field(default=None, kw_only=True)

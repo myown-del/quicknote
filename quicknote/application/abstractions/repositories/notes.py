@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from typing import Protocol
 from uuid import UUID
 
-from quicknote.domain.entities.note import NoteDM
+from quicknote.domain.entities.note import Note
 
 
 class INotesRepository(Protocol):
@@ -11,15 +11,15 @@ class INotesRepository(Protocol):
     """
 
     @abstractmethod
-    async def create(self, entity: NoteDM):
+    async def create(self, entity: Note):
         raise NotImplementedError
 
     @abstractmethod
-    async def get_by_user_telegram_id(self, telegram_id: int) -> list[NoteDM]:
+    async def get_by_user_telegram_id(self, telegram_id: int) -> list[Note]:
         raise NotImplementedError
 
     @abstractmethod
-    async def get_by_id(self, entity_id: UUID) -> NoteDM:
+    async def get_by_id(self, entity_id: UUID) -> Note:
         raise NotImplementedError
 
     @abstractmethod

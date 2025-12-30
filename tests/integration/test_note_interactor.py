@@ -4,12 +4,12 @@ from dishka import AsyncContainer
 from quicknote.application.interactors import NoteInteractor
 from quicknote.application.interactors.notes.dto import CreateNote
 from quicknote.application.interactors.users.exceptions import UserNotFoundException
-from quicknote.domain.entities.user import UserDM
+from quicknote.domain.entities.user import User
 from quicknote.infrastructure.db.repositories.hub import RepositoryHub
 
 
 @pytest.mark.asyncio
-async def test_note_creation(dishka_request: AsyncContainer, user: UserDM, repo_hub: RepositoryHub):
+async def test_note_creation(dishka_request: AsyncContainer, user: User, repo_hub: RepositoryHub):
     interactor = await dishka_request.get(NoteInteractor)
 
     data = CreateNote(

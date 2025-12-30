@@ -3,7 +3,7 @@ from uuid import uuid4, UUID
 from quicknote.application.abstractions.repositories.users import IUsersRepository
 from quicknote.application.interactors.users.dto import CreateOrUpdateUser
 from quicknote.application.interactors.users.exceptions import UserNotFoundException
-from quicknote.domain.entities.user import UserDM
+from quicknote.domain.entities.user import User
 
 
 class UserInteractor:
@@ -14,7 +14,7 @@ class UserInteractor:
         self._users_repo = users_repo
 
     async def create_or_update_user(self, user_data: CreateOrUpdateUser):
-        user_entity = UserDM(
+        user_entity = User(
             id=uuid4(),
             telegram_id=user_data.telegram_id,
             username=user_data.username,
@@ -28,13 +28,13 @@ class UserInteractor:
         else:
             await self._users_repo.create(user_entity)
 
-    async def get_user_by_telegram_id(self, telegram_id: int) -> UserDM:
+    async def get_user_by_telegram_id(self, telegram_id: int) -> User:
         user = await self._users_repo.get_by_telegram_id(telegram_id)
         if not user:
             raise UserNotFoundException()
         return user
 
-    async def get_user_by_id(self, user_id: UUID) -> UserDM:
+    async def get_user_by_id(self, user_id: UUID) -> User:
         user = await self._users_repo.get_by_id(user_id)
         if not user:
             raise UserNotFoundException()

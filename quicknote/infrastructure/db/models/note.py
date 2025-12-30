@@ -9,7 +9,7 @@ from quicknote.infrastructure.db.models.base import Base
 from quicknote.infrastructure.db.models.mixins import CreatedUpdatedMixin
 
 
-class Note(Base, CreatedUpdatedMixin):
+class NoteDB(Base, CreatedUpdatedMixin):
     __tablename__ = "notes"
 
     id: Mapped[UUID] = mapped_column(Uuid, primary_key=True)
@@ -21,4 +21,4 @@ class Note(Base, CreatedUpdatedMixin):
     title: Mapped[str | None] = mapped_column(String(length=255), nullable=True)
     text: Mapped[str | None] = mapped_column(String(length=4096), nullable=True)
 
-    user = relationship("User", back_populates="notes", lazy="selectin")
+    user = relationship("UserDB", back_populates="notes", lazy="selectin")

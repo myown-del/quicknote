@@ -9,16 +9,15 @@ from quicknote.config.models import Config
 from quicknote.config.parser import load_config
 from quicknote.infrastructure.db.provider import DatabaseProvider
 from tests.fixtures.db_provider import TestDbProvider
+from tests.fixtures.graph_provider import TestGraphProvider
 
 
 @pytest.fixture(scope="session")
 def event_loop():
-    try:
-        return asyncio.get_running_loop()
-    except RuntimeError:
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-        return loop
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    yield loop
+    loop.close()
 
 
 @pytest_asyncio.fixture(scope="session")
@@ -34,6 +33,7 @@ async def dishka():
         ConfigProvider(),
         TestDbProvider(),
         DatabaseProvider(),
+        TestGraphProvider(),
         InteractorProvider(),
         JwtProvider(),
         context={Config: config}
