@@ -1,11 +1,8 @@
-from uuid import uuid4
-
 import pytest
 from dishka import AsyncContainer
 from brain.application.interactors import NoteInteractor
 from brain.application.interactors.notes.dto import CreateNote
 from brain.domain.entities.user import User
-from brain.infrastructure.db.models.keyword import KeywordDB
 from brain.infrastructure.db.repositories.hub import RepositoryHub
 
 
@@ -36,28 +33,28 @@ async def test_wikilink_suggestions_include_keyword_notes_and_missing_keywords(
     await interactor.create_note(
         CreateNote(
             by_user_telegram_id=user.telegram_id,
-            title="Delta",
-            text="Delta text",
-            represents_keyword=True,
-        )
-    )
-    await interactor.create_note(
-        CreateNote(
-            by_user_telegram_id=user.telegram_id,
             title="Zeta",
             text="Zeta text",
             represents_keyword=True,
         )
     )
 
-    session.add_all(
-        [
-            KeywordDB(id=uuid4(), user_id=user.id, name="Beta"),
-            KeywordDB(id=uuid4(), user_id=user.id, name="Gamma"),
-            KeywordDB(id=uuid4(), user_id=user.id, name="Delta"),
-        ]
+    await interactor.create_note(
+        CreateNote(
+            by_user_telegram_id=user.telegram_id,
+            title="Links",
+            text="See [[Beta]] and [[Gamma]] and [[Delta]]",
+            represents_keyword=False,
+        )
     )
-    await session.commit()
+    await interactor.create_note(
+        CreateNote(
+            by_user_telegram_id=user.telegram_id,
+            title="Delta",
+            text="Delta text",
+            represents_keyword=True,
+        )
+    )
 
     suggestions = await repo_hub.notes.search_wikilink_suggestions(
         user_id=user.id,

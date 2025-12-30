@@ -4,11 +4,9 @@ from uuid import uuid4, UUID
 from brain.application.abstractions.repositories.notes import INotesRepository
 from brain.application.abstractions.repositories.notes_graph import INotesGraphRepository
 from brain.application.abstractions.repositories.users import IUsersRepository
-from brain.application.interactors.notes.dto import (
-    CreateNote,
-    UpdateNote,
-    WikilinkSuggestion,
-)
+from brain.application.abstractions.repositories.keywords import IKeywordsRepository
+from brain.application.interactors.notes.dto import CreateNote, UpdateNote
+from brain.application.abstractions.repositories.models import WikilinkSuggestion
 from brain.application.interactors.notes.exceptions import (
     NoteNotFoundException,
     KeywordNoteTitleRequiredException,
@@ -30,10 +28,12 @@ class NoteInteractor:
             notes_repo: INotesRepository,
             users_repo: IUsersRepository,
             notes_graph_repo: INotesGraphRepository,
+            keywords_repo: IKeywordsRepository,
     ):
         self._notes_repo = notes_repo
         self._users_repo = users_repo
         self._notes_graph_repo = notes_graph_repo
+        self._keywords_repo = keywords_repo
 
     async def create_note(self, note_data: CreateNote) -> UUID:
         user = await self._users_repo.get_by_telegram_id(
@@ -69,6 +69,11 @@ class NoteInteractor:
         await self._notes_repo.create(note)
         await self._notes_graph_repo.upsert_note(note)
         link_targets = extract_link_targets(note.text or "")
+        await self._keywords_repo.replace_note_keywords(
+            note_id=note.id,
+            user_id=user.id,
+            names=link_targets,
+        )
         await self._notes_graph_repo.sync_connections(note, link_targets)
 
         return note.id
@@ -96,7 +101,13 @@ class NoteInteractor:
         if note is None:
             raise NoteNotFoundException()
 
+        link_targets = extract_link_targets(note.text or "")
         await self._notes_repo.delete_by_id(note_id)
+        await self._keywords_repo.delete_note_keywords(note_id)
+        await self._keywords_repo.delete_unused_keywords(
+            user_id=note.user_id,
+            names=link_targets,
+        )
         await self._notes_graph_repo.delete_note(note_id)
 
     async def update_note(self, note_data: UpdateNote) -> Note:
@@ -104,6 +115,7 @@ class NoteInteractor:
         if note is None:
             raise NoteNotFoundException()
 
+        previous_targets = extract_link_targets(note.text or "")
         previous_title = note.title
         previous_represents_keyword = note.represents_keyword
         note.title = note_data.title
@@ -133,6 +145,19 @@ class NoteInteractor:
         await self._notes_repo.update(note)
         await self._notes_graph_repo.upsert_note(note)
         link_targets = extract_link_targets(note.text or "")
+        await self._keywords_repo.replace_note_keywords(
+            note_id=note.id,
+            user_id=note.user_id,
+            names=link_targets,
+        )
+        removed_targets = [
+            title for title in previous_targets
+            if title not in set(link_targets)
+        ]
+        await self._keywords_repo.delete_unused_keywords(
+            user_id=note.user_id,
+            names=removed_targets,
+        )
         await self._notes_graph_repo.sync_connections(
             note,
             link_targets,

@@ -17,8 +17,3 @@ class UpdateNote:
     text: str | None
     represents_keyword: bool | None = None
 
-
-@dataclass
-class WikilinkSuggestion:
-    title: str
-    represents_keyword: bool

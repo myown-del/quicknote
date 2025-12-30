@@ -4,6 +4,7 @@ from dishka import Provider, provide, Scope
 from sqlalchemy.ext.asyncio import async_sessionmaker, AsyncSession, AsyncEngine
 
 from brain.application.abstractions.repositories.notes import INotesRepository
+from brain.application.abstractions.repositories.keywords import IKeywordsRepository
 from brain.application.abstractions.repositories.users import IUsersRepository
 from brain.application.abstractions.repositories.jwt import (
     IJwtRefreshTokensRepository,
@@ -15,6 +16,7 @@ from brain.application.abstractions.config.models import IDatabaseConfig
 from brain.infrastructure.db.connection import create_engine, create_session_maker
 from brain.infrastructure.db.repositories.hub import RepositoryHub
 from brain.infrastructure.db.repositories.notes import NotesRepository
+from brain.infrastructure.db.repositories.keywords import KeywordsRepository
 from brain.infrastructure.db.repositories.users import UsersRepository
 from brain.infrastructure.db.repositories.jwt import (
     JwtRefreshTokensRepository,
@@ -49,6 +51,9 @@ class DatabaseProvider(Provider):
     )
     notes_repository = provide(
         NotesRepository, scope=Scope.REQUEST, provides=INotesRepository
+    )
+    keywords_repository = provide(
+        KeywordsRepository, scope=Scope.REQUEST, provides=IKeywordsRepository
     )
     tg_bot_auth_repository = provide(
         TelegramBotAuthSessionsRepository,

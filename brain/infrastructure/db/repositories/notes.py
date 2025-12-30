@@ -5,7 +5,7 @@ from sqlalchemy import select, text, func, exists
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from brain.application.abstractions.repositories.notes import INotesRepository
-from brain.application.interactors.notes.dto import WikilinkSuggestion
+from brain.application.abstractions.repositories.models import WikilinkSuggestion
 from brain.domain.entities.note import Note
 from brain.infrastructure.db.mappers.notes import map_note_to_db, map_note_to_dm
 from brain.infrastructure.db.models.keyword import KeywordDB

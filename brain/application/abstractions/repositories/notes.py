@@ -3,7 +3,7 @@ from typing import Protocol
 from uuid import UUID
 
 from brain.domain.entities.note import Note
-from brain.application.interactors.notes.dto import WikilinkSuggestion
+from brain.application.abstractions.repositories.models import WikilinkSuggestion
 
 
 class INotesRepository(Protocol):
