@@ -3,7 +3,7 @@ from typing import Protocol
 
 from uuid import UUID
 
-from quicknote.domain.entities.telegram_bot_auth_session import TelegramBotAuthSession
+from quicknote.domain.entities.tg_bot_auth import TelegramBotAuthSession
 
 
 class ITelegramBotAuthSessionsRepository(Protocol):

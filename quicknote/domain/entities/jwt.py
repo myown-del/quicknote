@@ -6,13 +6,13 @@ from quicknote.domain.entities.common import Entity
 
 
 @dataclass
-class JwtToken:
+class JwtAccessToken:
     access_token: str
     expires_at: datetime
 
 
 @dataclass
-class JwtTokens:
+class FullJwtToken:
     access_token: str
     expires_at: datetime
     refresh_token: str

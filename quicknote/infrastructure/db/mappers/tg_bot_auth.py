@@ -1,7 +1,5 @@
-from quicknote.domain.entities.telegram_bot_auth_session import TelegramBotAuthSession
-from quicknote.infrastructure.db.models.telegram_bot_auth_session import (
-    TelegramBotAuthSessionDB,
-)
+from quicknote.domain.entities.tg_bot_auth import TelegramBotAuthSession
+from quicknote.infrastructure.db.models.tg_bot_auth import TelegramBotAuthSessionDB
 
 
 def map_telegram_bot_auth_session_to_dm(
@@ -9,7 +7,7 @@ def map_telegram_bot_auth_session_to_dm(
 ) -> TelegramBotAuthSession:
     return TelegramBotAuthSession(
         id=session.id,
-        user_id=session.user_id,
+        telegram_id=session.user_id,
         jwt_token_id=session.jwt_token_id,
         created_at=session.created_at,
     )
@@ -20,7 +18,7 @@ def map_telegram_bot_auth_session_to_db(
 ) -> TelegramBotAuthSessionDB:
     return TelegramBotAuthSessionDB(
         id=session.id,
-        user_id=session.user_id,
+        user_id=session.telegram_id,
         jwt_token_id=session.jwt_token_id,
         created_at=session.created_at,
     )

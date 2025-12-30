@@ -1,6 +1,6 @@
 from typing import Protocol
 
-from quicknote.domain.entities.jwt import JwtToken
+from quicknote.domain.entities.jwt import JwtAccessToken
 
 
 class TokenExpiredError(Exception):
@@ -12,7 +12,7 @@ class TokenInvalidError(Exception):
 
 
 class TokenVerifier(Protocol):
-    def create_token(self, payload: dict) -> JwtToken:
+    def create_token(self, payload: dict) -> JwtAccessToken:
         ...
 
     def decode_token(self, token: str) -> dict:

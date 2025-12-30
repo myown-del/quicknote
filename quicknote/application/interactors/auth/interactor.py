@@ -17,8 +17,8 @@ from quicknote.application.abstractions.repositories.jwt import (
     IJwtRefreshTokensRepository,
 )
 
-from quicknote.config.models import BotConfig, AuthenticationConfig
-from quicknote.domain.entities.jwt import JwtToken, JwtTokens, JwtRefreshToken
+from quicknote.config.models import AuthenticationConfig
+from quicknote.domain.entities.jwt import JwtAccessToken, FullJwtToken, JwtRefreshToken
 from quicknote.domain.entities.user import User
 
 
@@ -26,13 +26,11 @@ class AuthInteractor:
     def __init__(
         self,
         user_interactor: UserInteractor,
-        bot_config: BotConfig,
         auth_config: AuthenticationConfig,
         jwt_service: TokenVerifier,
         jwt_repo: IJwtRefreshTokensRepository,
     ):
         self._user_interactor = user_interactor
-        self._bot_config = bot_config
         self._auth_config = auth_config
         self._jwt_service = jwt_service
         self._jwt_repo = jwt_repo
@@ -40,12 +38,12 @@ class AuthInteractor:
     def _create_jwt_token(
         self,
         payload: JwtTokenCreationPayload,
-    ) -> JwtToken:
+    ) -> JwtAccessToken:
         return self._jwt_service.create_token(
             payload=asdict(payload)
         )
 
-    def _create_access_token_for_user(self, user_id: UUID) -> JwtToken:
+    def _create_access_token_for_user(self, user_id: UUID) -> JwtAccessToken:
         return self._create_jwt_token(
             payload=JwtTokenCreationPayload(
                 user_id=user_id
@@ -83,11 +81,11 @@ class AuthInteractor:
         jwt_token_payload = DecodedJwtTokenPayload(**data)
         return jwt_token_payload
 
-    async def _issue_tokens_for_user_id(self, user_id: UUID) -> tuple[JwtTokens, UUID]:
+    async def _issue_tokens_for_user_id(self, user_id: UUID) -> tuple[FullJwtToken, UUID]:
         access_token = self._create_access_token_for_user(user_id)
         refresh_token = await self._create_refresh_token_for_user(user_id)
         return (
-            JwtTokens(
+            FullJwtToken(
                 access_token=access_token.access_token,
                 expires_at=access_token.expires_at,
                 refresh_token=refresh_token.token,
@@ -96,15 +94,18 @@ class AuthInteractor:
             refresh_token.id,
         )
 
-    async def issue_tokens_for_telegram_id(self, telegram_id: int) -> tuple[JwtTokens, UUID]:
+    async def issue_refresh_token_for_telegram_id(
+        self, telegram_id: int
+    ) -> JwtRefreshToken:
         user = await self._user_interactor.get_user_by_telegram_id(telegram_id)
-        return await self._issue_tokens_for_user_id(user.id)
+        return await self._create_refresh_token_for_user(user.id)
 
-    async def login(self, telegram_id: int) -> JwtTokens:
-        tokens, _ = await self.issue_tokens_for_telegram_id(telegram_id)
+    async def login(self, telegram_id: int) -> FullJwtToken:
+        user = await self._user_interactor.get_user_by_telegram_id(telegram_id)
+        tokens, _ = await self._issue_tokens_for_user_id(user.id)
         return tokens
 
-    async def refresh_tokens(self, refresh_token: str) -> JwtTokens:
+    async def refresh_tokens(self, refresh_token: str) -> FullJwtToken:
         payload = self._decode_jwt_token(refresh_token)
         token_record = await self._jwt_repo.get_by_token(refresh_token)
         if not token_record:
@@ -121,11 +122,22 @@ class AuthInteractor:
     async def revoke_refresh_token(self, token_id: UUID) -> None:
         await self._jwt_repo.delete_by_id(token_id)
 
-    async def get_refresh_token(self, token_id: UUID) -> JwtRefreshToken | None:
-        return await self._jwt_repo.get_by_id(token_id)
+    async def build_tokens_for_refresh_token_id(
+        self, token_id: UUID
+    ) -> FullJwtToken | None:
+        refresh_token = await self._jwt_repo.get_by_id(token_id)
+        if not refresh_token:
+            return None
+        if refresh_token.expires_at < datetime.utcnow():
+            return None
 
-    def create_access_token_for_user(self, user_id: UUID) -> JwtToken:
-        return self._create_access_token_for_user(user_id)
+        access_token = self._create_access_token_for_user(refresh_token.user_id)
+        return FullJwtToken(
+            access_token=access_token.access_token,
+            expires_at=access_token.expires_at,
+            refresh_token=refresh_token.token,
+            refresh_expires_at=refresh_token.expires_at,
+        )
 
     async def authorize_by_token(self, token: str) -> User:
         payload = self._decode_jwt_token(token)

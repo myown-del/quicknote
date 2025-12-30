@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from quicknote.application.abstractions.repositories.tg_bot_auth import (
     ITelegramBotAuthSessionsRepository,
 )
-from quicknote.domain.entities.telegram_bot_auth_session import TelegramBotAuthSession
+from quicknote.domain.entities.tg_bot_auth import TelegramBotAuthSession
 from quicknote.infrastructure.db.mappers.tg_bot_auth import (
     map_telegram_bot_auth_session_to_db,
     map_telegram_bot_auth_session_to_dm,

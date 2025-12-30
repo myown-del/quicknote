@@ -2,7 +2,7 @@ from dataclasses import asdict
 
 from dishka import FromDishka
 from dishka.integrations.fastapi import inject
-from fastapi import APIRouter, Request, HTTPException, status, Query
+from fastapi import APIRouter, HTTPException, status, Query
 
 from quicknote.application.interactors.auth.exceptions import (
     JwtTokenExpiredException,
@@ -16,11 +16,23 @@ from quicknote.application.interactors.auth.session_interactor import (
 from quicknote.application.interactors.users.exceptions import UserNotFoundException
 from quicknote.config.models import AuthenticationConfig
 from quicknote.presentation.api.routes.auth.models import (
-    JwtTokenSchema,
+    JwtTokenchema,
     FakeAuthSchema,
     RefreshTokenSchema,
     TelegramBotAuthSessionSchema,
 )
+from quicknote.domain.entities.tg_bot_auth import TelegramBotAuthSession
+
+
+def _serialize_tg_bot_auth_session(
+    session: TelegramBotAuthSession,
+) -> dict:
+    return {
+        "id": session.id,
+        "telegram_id": session.telegram_id,
+        "jwt_token_id": session.jwt_token_id,
+        "created_at": session.created_at,
+    }
 
 
 @inject
@@ -48,7 +60,7 @@ async def fake_auth(
             detail="Token expired"
         )
 
-    return JwtTokenSchema.model_validate(asdict(token))
+    return JwtTokenchema.model_validate(asdict(token))
 
 
 @inject
@@ -69,7 +81,7 @@ async def refresh_token(
             detail="Invalid token"
         )
 
-    return JwtTokenSchema.model_validate(asdict(token))
+    return JwtTokenchema.model_validate(asdict(token))
 
 
 @inject
@@ -77,7 +89,9 @@ async def create_tg_bot_auth_session(
     interactor: FromDishka[TelegramBotAuthSessionInteractor],
 ):
     session = await interactor.create_session()
-    return TelegramBotAuthSessionSchema.model_validate(asdict(session))
+    return TelegramBotAuthSessionSchema.model_validate(
+        _serialize_tg_bot_auth_session(session)
+    )
 
 
 @inject
@@ -86,7 +100,7 @@ async def get_tg_bot_auth_session(
     session_id: str = Query(..., alias="id"),
 ):
     try:
-        session, tokens = await interactor.get_session_with_tokens(
+        session_data = await interactor.get_session_with_tokens(
             session_id=session_id
         )
     except TelegramBotAuthSessionNotFoundException:
@@ -94,9 +108,11 @@ async def get_tg_bot_auth_session(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Session not found",
         )
-    payload = asdict(session)
-    if tokens:
-        payload["jwt_token"] = JwtTokenSchema.model_validate(asdict(tokens))
+    payload = _serialize_tg_bot_auth_session(session_data.session)
+    if session_data.tokens:
+        payload["jwt_token"] = JwtTokenchema.model_validate(
+            asdict(session_data.tokens)
+        )
     return TelegramBotAuthSessionSchema.model_validate(payload)
 
 
@@ -106,13 +122,13 @@ def get_router() -> APIRouter:
         path="/fake",
         endpoint=fake_auth,
         methods=["POST"],
-        response_model=JwtTokenSchema
+        response_model=JwtTokenchema
     )
     router.add_api_route(
         path="/tokens/refresh",
         endpoint=refresh_token,
         methods=["POST"],
-        response_model=JwtTokenSchema
+        response_model=JwtTokenchema
     )
     router.add_api_route(
         path="/tg-bot/session",

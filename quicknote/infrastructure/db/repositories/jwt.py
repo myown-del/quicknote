@@ -6,12 +6,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from quicknote.application.abstractions.repositories.jwt import (
     IJwtRefreshTokensRepository,
 )
-from quicknote.domain.entities.jwt_refresh_token import JwtRefreshToken
+from quicknote.domain.entities.jwt import JwtRefreshToken
 from quicknote.infrastructure.db.mappers.jwt import (
     map_jwt_refresh_token_to_db,
     map_jwt_refresh_token_to_dm,
 )
-from quicknote.infrastructure.db.models.jwt_refresh_token import JwtRefreshTokenDB
+from quicknote.infrastructure.db.models.jwt import JwtRefreshTokenDB
 
 
 class JwtRefreshTokensRepository(IJwtRefreshTokensRepository):

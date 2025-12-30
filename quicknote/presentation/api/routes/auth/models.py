@@ -4,7 +4,7 @@ from uuid import UUID
 from pydantic import BaseModel
 
 
-class JwtTokenSchema(BaseModel):
+class JwtTokenchema(BaseModel):
     access_token: str
     expires_at: datetime
     refresh_token: str
@@ -22,7 +22,7 @@ class RefreshTokenSchema(BaseModel):
 
 class TelegramBotAuthSessionSchema(BaseModel):
     id: str
-    user_id: int | None
+    telegram_id: int | None
     jwt_token_id: UUID | None = None
     created_at: datetime
-    jwt_token: JwtTokenSchema | None = None
+    jwt_token: JwtTokenchema | None = None

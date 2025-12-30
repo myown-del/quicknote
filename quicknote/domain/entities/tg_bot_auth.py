@@ -12,6 +12,6 @@ class TelegramBotAuthSession(Entity):
     """
 
     id: str
-    user_id: int | None = field(default=None, kw_only=True)
+    telegram_id: int | None = field(default=None, kw_only=True)
     jwt_token_id: UUID | None = field(default=None, kw_only=True)
-    created_at: datetime | None = field(default=None, kw_only=True)
+    created_at: datetime = field(default_factory=datetime.utcnow, kw_only=True)

@@ -10,7 +10,7 @@ from quicknote.application.abstractions.token_verifier import (
     TokenExpiredError,
     TokenInvalidError,
 )
-from quicknote.domain.entities.jwt import JwtToken
+from quicknote.domain.entities.jwt import JwtAccessToken
 
 
 class UUIDEncoder(JSONEncoder):
@@ -31,7 +31,7 @@ class JwtService(TokenVerifier):
         self._access_token_lifetime = access_token_lifetime
         self._algorithm = algorithm
 
-    def create_token(self, payload: dict) -> JwtToken:
+    def create_token(self, payload: dict) -> JwtAccessToken:
         expires_at = payload.get("exp")
         if expires_at is None:
             expires_at = datetime.utcnow() + timedelta(
@@ -45,7 +45,7 @@ class JwtService(TokenVerifier):
             algorithm=self._algorithm,
             json_encoder=UUIDEncoder
         )
-        return JwtToken(
+        return JwtAccessToken(
             access_token=encoded_jwt,
             expires_at=expires_at
         )

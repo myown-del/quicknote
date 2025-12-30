@@ -2,7 +2,7 @@ from abc import abstractmethod
 from typing import Protocol
 from uuid import UUID
 
-from quicknote.domain.entities.jwt_refresh_token import JwtRefreshToken
+from quicknote.domain.entities.jwt import JwtRefreshToken
 
 
 class IJwtRefreshTokensRepository(Protocol):
