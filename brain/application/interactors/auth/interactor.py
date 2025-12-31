@@ -2,7 +2,7 @@ from dataclasses import asdict
 from datetime import datetime, timedelta
 from uuid import UUID, uuid4
 
-from brain.application.interactors.users.interactor import UserInteractor
+from brain.application.interactors.users.get_user import GetUserInteractor
 from brain.application.interactors.auth.dto import (
     JwtTokenCreationPayload,
     DecodedJwtTokenPayload,
@@ -25,7 +25,7 @@ from brain.domain.entities.user import User
 class AuthInteractor:
     def __init__(
         self,
-        user_interactor: UserInteractor,
+        user_interactor: GetUserInteractor,
         auth_config: AuthenticationConfig,
         jwt_service: TokenVerifier,
         jwt_repo: IJwtRefreshTokensRepository,
