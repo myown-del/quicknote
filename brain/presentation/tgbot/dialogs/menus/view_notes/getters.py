@@ -3,12 +3,12 @@ from uuid import UUID
 from aiogram_dialog import DialogManager
 from dishka import AsyncContainer
 
-from brain.application.interactors import NoteInteractor
+from brain.application.interactors import GetNoteInteractor, GetNotesInteractor
 
 
 async def get_notes_list(dialog_manager: DialogManager, **kwargs):
     container: AsyncContainer = dialog_manager.middleware_data.get("dishka_container")
-    notes_interactor: NoteInteractor = await container.get(NoteInteractor)
+    notes_interactor: GetNotesInteractor = await container.get(GetNotesInteractor)
 
     user = dialog_manager.event.from_user
     notes = await notes_interactor.get_notes(user_telegram_id=user.id)
@@ -18,7 +18,7 @@ async def get_notes_list(dialog_manager: DialogManager, **kwargs):
 
 async def get_note_details(dialog_manager: DialogManager, **kwargs):
     container: AsyncContainer = dialog_manager.middleware_data.get("dishka_container")
-    notes_interactor: NoteInteractor = await container.get(NoteInteractor)
+    notes_interactor: GetNoteInteractor = await container.get(GetNoteInteractor)
 
     chosen_note_id = dialog_manager.current_context().dialog_data.get("chosen_note_id")
     chosen_note_id = UUID(chosen_note_id)

@@ -4,23 +4,24 @@ from brain.application.abstractions.repositories.notes_graph import (
     INotesGraphRepository,
 )
 from brain.application.interactors.notes.dto import CreateNote, UpdateNote
-from brain.application.interactors.notes.interactor import NoteInteractor
+from brain.application.interactors import CreateNoteInteractor, UpdateNoteInteractor
 from brain.domain.entities.user import User
 
 
 @pytest.mark.asyncio
 async def test_note_graph_links_only_to_keyword_notes(dishka_request, user: User):
-    interactor = await dishka_request.get(NoteInteractor)
+    create_interactor = await dishka_request.get(CreateNoteInteractor)
+    update_interactor = await dishka_request.get(UpdateNoteInteractor)
     notes_graph_repo = await dishka_request.get(INotesGraphRepository)
 
-    child_id = await interactor.create_note(
+    child_id = await create_interactor.create_note(
         CreateNote(
             by_user_telegram_id=user.telegram_id,
             title="Child",
             text="leaf",
         )
     )
-    await interactor.create_note(
+    await create_interactor.create_note(
         CreateNote(
             by_user_telegram_id=user.telegram_id,
             title="Root",
@@ -38,7 +39,7 @@ async def test_note_graph_links_only_to_keyword_notes(dishka_request, user: User
     )
     assert link_count == 0
 
-    await interactor.update_note(
+    await update_interactor.update_note(
         UpdateNote(
             note_id=child_id,
             title="Child",

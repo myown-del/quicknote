@@ -1,6 +1,6 @@
 import pytest
 from dishka import AsyncContainer
-from brain.application.interactors import NoteInteractor
+from brain.application.interactors import CreateNoteInteractor
 from brain.application.interactors.notes.dto import CreateNote
 from brain.domain.entities.user import User
 from brain.infrastructure.db.repositories.hub import RepositoryHub
@@ -12,9 +12,9 @@ async def test_wikilink_suggestions_include_keyword_notes_and_missing_keywords(
     repo_hub: RepositoryHub,
     user: User,
 ):
-    interactor = await dishka_request.get(NoteInteractor)
+    create_interactor = await dishka_request.get(CreateNoteInteractor)
 
-    await interactor.create_note(
+    await create_interactor.create_note(
         CreateNote(
             by_user_telegram_id=user.telegram_id,
             title="Alpha",
@@ -22,14 +22,14 @@ async def test_wikilink_suggestions_include_keyword_notes_and_missing_keywords(
             represents_keyword=True,
         )
     )
-    await interactor.create_note(
+    await create_interactor.create_note(
         CreateNote(
             by_user_telegram_id=user.telegram_id,
             title="Beta",
             text="Non keyword note",
         )
     )
-    await interactor.create_note(
+    await create_interactor.create_note(
         CreateNote(
             by_user_telegram_id=user.telegram_id,
             title="Zeta",
@@ -38,14 +38,14 @@ async def test_wikilink_suggestions_include_keyword_notes_and_missing_keywords(
         )
     )
 
-    await interactor.create_note(
+    await create_interactor.create_note(
         CreateNote(
             by_user_telegram_id=user.telegram_id,
             title="Links",
             text="See [[Beta]] and [[Gamma]] and [[Delta]]",
         )
     )
-    await interactor.create_note(
+    await create_interactor.create_note(
         CreateNote(
             by_user_telegram_id=user.telegram_id,
             title="Delta",

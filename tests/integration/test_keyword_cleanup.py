@@ -3,7 +3,7 @@ from dishka import AsyncContainer
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from brain.application.interactors import NoteInteractor
+from brain.application.interactors import CreateNoteInteractor, DeleteNoteInteractor
 from brain.application.interactors.notes.dto import CreateNote
 from brain.domain.entities.user import User
 from brain.infrastructure.db.models.keyword import KeywordDB, NoteKeywordDB
@@ -14,17 +14,18 @@ async def test_keywords_deleted_when_last_link_removed(
     dishka_request: AsyncContainer,
     user: User,
 ):
-    interactor = await dishka_request.get(NoteInteractor)
+    create_interactor = await dishka_request.get(CreateNoteInteractor)
+    delete_interactor = await dishka_request.get(DeleteNoteInteractor)
     session = await dishka_request.get(AsyncSession)
 
-    first_note_id = await interactor.create_note(
+    first_note_id = await create_interactor.create_note(
         CreateNote(
             by_user_telegram_id=user.telegram_id,
             title="First",
             text="See [[Omega]]",
         )
     )
-    second_note_id = await interactor.create_note(
+    second_note_id = await create_interactor.create_note(
         CreateNote(
             by_user_telegram_id=user.telegram_id,
             title="Second",
@@ -37,13 +38,13 @@ async def test_keywords_deleted_when_last_link_removed(
     )
     assert result.scalar() is not None
 
-    await interactor.delete_note(first_note_id)
+    await delete_interactor.delete_note(first_note_id)
     result = await session.execute(
         select(KeywordDB).where(KeywordDB.user_id == user.id, KeywordDB.name == "Omega")
     )
     assert result.scalar() is not None
 
-    await interactor.delete_note(second_note_id)
+    await delete_interactor.delete_note(second_note_id)
     result = await session.execute(
         select(KeywordDB).where(KeywordDB.user_id == user.id, KeywordDB.name == "Omega")
     )
@@ -55,10 +56,11 @@ async def test_keyword_note_creates_keyword_without_link(
     dishka_request: AsyncContainer,
     user: User,
 ):
-    interactor = await dishka_request.get(NoteInteractor)
+    create_interactor = await dishka_request.get(CreateNoteInteractor)
+    delete_interactor = await dishka_request.get(DeleteNoteInteractor)
     session = await dishka_request.get(AsyncSession)
 
-    note_id = await interactor.create_note(
+    note_id = await create_interactor.create_note(
         CreateNote(
             by_user_telegram_id=user.telegram_id,
             title="Atlas",
@@ -87,7 +89,7 @@ async def test_keyword_note_creates_keyword_without_link(
     ).scalar()
     assert link is None
 
-    await interactor.delete_note(note_id)
+    await delete_interactor.delete_note(note_id)
 
     keyword_after = (
         await session.execute(

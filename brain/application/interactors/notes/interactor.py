@@ -1,19 +1,21 @@
 from datetime import datetime
-from uuid import uuid4, UUID
+from uuid import UUID, uuid4
 
-from brain.application.abstractions.repositories.notes import INotesRepository
-from brain.application.abstractions.repositories.notes_graph import INotesGraphRepository
-from brain.application.abstractions.repositories.users import IUsersRepository
 from brain.application.abstractions.repositories.keywords import IKeywordsRepository
-from brain.application.interactors.notes.dto import CreateNote, UpdateNote
+from brain.application.abstractions.repositories.notes import INotesRepository
 from brain.application.abstractions.repositories.models import WikilinkSuggestion
-from brain.application.interactors.notes.keyword_utils import normalize_keyword_names
-from brain.application.interactors.notes.exceptions import (
-    NoteNotFoundException,
-    KeywordNoteTitleRequiredException,
-    KeywordNoteAlreadyExistsException,
-    KeywordNotFoundException,
+from brain.application.abstractions.repositories.notes_graph import (
+    INotesGraphRepository,
 )
+from brain.application.abstractions.repositories.users import IUsersRepository
+from brain.application.interactors.notes.dto import CreateNote, UpdateNote
+from brain.application.interactors.notes.exceptions import (
+    KeywordNoteAlreadyExistsException,
+    KeywordNoteTitleRequiredException,
+    KeywordNotFoundException,
+    NoteNotFoundException,
+)
+from brain.application.interactors.notes.keyword_utils import normalize_keyword_names
 from brain.application.interactors.users.exceptions import UserNotFoundException
 from brain.domain.entities.note import Note
 from brain.domain.exceptions import (
@@ -24,13 +26,13 @@ from brain.domain.services.notes import ensure_keyword_note_valid
 from brain.domain.services.wikilinks import extract_link_targets
 
 
-class NoteInteractor:
+class NoteUseCaseBase:
     def __init__(
-            self,
-            notes_repo: INotesRepository,
-            users_repo: IUsersRepository,
-            notes_graph_repo: INotesGraphRepository,
-            keywords_repo: IKeywordsRepository,
+        self,
+        notes_repo: INotesRepository,
+        users_repo: IUsersRepository,
+        notes_graph_repo: INotesGraphRepository,
+        keywords_repo: IKeywordsRepository,
     ):
         self._notes_repo = notes_repo
         self._users_repo = users_repo
@@ -206,6 +208,8 @@ class NoteInteractor:
             names=removed_targets,
         )
 
+
+class CreateNoteInteractor(NoteUseCaseBase):
     async def create_note(self, note_data: CreateNote) -> UUID:
         user = await self._get_user_or_raise(note_data.by_user_telegram_id)
 
@@ -240,43 +244,8 @@ class NoteInteractor:
 
         return note.id
 
-    async def get_notes(self, user_telegram_id: int) -> list[Note]:
-        notes = await self._notes_repo.get_by_user_telegram_id(user_telegram_id)
-        return notes
 
-    async def get_note_by_id(self, note_id: UUID) -> Note | None:
-        note = await self._notes_repo.get_by_id(note_id)
-        return note
-
-    async def search_wikilink_suggestions(
-        self,
-        user_id: UUID,
-        query: str,
-    ) -> list[WikilinkSuggestion]:
-        return await self._notes_repo.search_wikilink_suggestions(
-            user_id=user_id,
-            query=query,
-        )
-
-    async def delete_note(self, note_id: UUID):
-        note = await self._notes_repo.get_by_id(note_id)
-        if note is None:
-            raise NoteNotFoundException()
-
-        link_targets = extract_link_targets(note.text or "")
-        cleanup_names = self._collect_cleanup_keyword_names(
-            link_targets=link_targets,
-            represents_keyword_id=note.represents_keyword_id,
-            title=note.title,
-        )
-        await self._notes_repo.delete_by_id(note_id)
-        await self._keywords_repo.delete_note_keywords(note_id)
-        await self._keywords_repo.delete_unused_keywords(
-            user_id=note.user_id,
-            names=cleanup_names,
-        )
-        await self._notes_graph_repo.delete_note(note_id)
-
+class UpdateNoteInteractor(NoteUseCaseBase):
     async def update_note(self, note_data: UpdateNote) -> Note:
         note = await self._notes_repo.get_by_id(note_data.note_id)
         if note is None:
@@ -324,3 +293,55 @@ class NoteInteractor:
         )
 
         return note
+
+
+class DeleteNoteInteractor(NoteUseCaseBase):
+    async def delete_note(self, note_id: UUID) -> None:
+        note = await self._notes_repo.get_by_id(note_id)
+        if note is None:
+            raise NoteNotFoundException()
+
+        link_targets = extract_link_targets(note.text or "")
+        cleanup_names = self._collect_cleanup_keyword_names(
+            link_targets=link_targets,
+            represents_keyword_id=note.represents_keyword_id,
+            title=note.title,
+        )
+        await self._notes_repo.delete_by_id(note_id)
+        await self._keywords_repo.delete_note_keywords(note_id)
+        await self._keywords_repo.delete_unused_keywords(
+            user_id=note.user_id,
+            names=cleanup_names,
+        )
+        await self._notes_graph_repo.delete_note(note_id)
+
+
+class GetNotesInteractor:
+    def __init__(self, notes_repo: INotesRepository):
+        self._notes_repo = notes_repo
+
+    async def get_notes(self, user_telegram_id: int) -> list[Note]:
+        return await self._notes_repo.get_by_user_telegram_id(user_telegram_id)
+
+
+class GetNoteInteractor:
+    def __init__(self, notes_repo: INotesRepository):
+        self._notes_repo = notes_repo
+
+    async def get_note_by_id(self, note_id: UUID) -> Note | None:
+        return await self._notes_repo.get_by_id(note_id)
+
+
+class SearchWikilinkSuggestionsInteractor:
+    def __init__(self, notes_repo: INotesRepository):
+        self._notes_repo = notes_repo
+
+    async def search_wikilink_suggestions(
+        self,
+        user_id: UUID,
+        query: str,
+    ) -> list[WikilinkSuggestion]:
+        return await self._notes_repo.search_wikilink_suggestions(
+            user_id=user_id,
+            query=query,
+        )

@@ -5,8 +5,14 @@ from dishka.integrations.fastapi import inject
 from fastapi import Depends, APIRouter, HTTPException, Query
 from starlette import status
 
-from brain.application.interactors import NoteInteractor
-from brain.application.interactors.notes.dto import CreateNote, UpdateNote
+from brain.application.interactors import (
+    CreateNoteInteractor,
+    DeleteNoteInteractor,
+    GetNoteInteractor,
+    GetNotesInteractor,
+    SearchWikilinkSuggestionsInteractor,
+    UpdateNoteInteractor,
+)
 from brain.application.interactors.notes.exceptions import (
     NoteNotFoundException,
     KeywordNoteTitleRequiredException,
@@ -31,7 +37,7 @@ from brain.presentation.api.routes.notes.models import (
 
 @inject
 async def get_notes(
-        interactor: FromDishka[NoteInteractor],
+        interactor: FromDishka[GetNotesInteractor],
         user: User = Depends(get_user_from_request),
 ):
     notes = await interactor.get_notes(user.telegram_id)
@@ -43,7 +49,7 @@ async def get_notes(
 
 @inject
 async def get_wikilink_suggestions(
-        interactor: FromDishka[NoteInteractor],
+        interactor: FromDishka[SearchWikilinkSuggestionsInteractor],
         query: str = Query(..., min_length=1),
         user: User = Depends(get_user_from_request),
 ):
@@ -59,13 +65,14 @@ async def get_wikilink_suggestions(
 
 @inject
 async def create_note(
-        interactor: FromDishka[NoteInteractor],
+        create_interactor: FromDishka[CreateNoteInteractor],
+        get_note_interactor: FromDishka[GetNoteInteractor],
         note: CreateNoteSchema,
         user: User = Depends(get_user_from_request),
 ):
     data = map_create_schema_to_dto(note, user)
     try:
-        note_id = await interactor.create_note(data)
+        note_id = await create_interactor.create_note(data)
     except KeywordNoteTitleRequiredException:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -81,17 +88,18 @@ async def create_note(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Keyword not found",
         )
-    note = await interactor.get_note_by_id(note_id)
+    note = await get_note_interactor.get_note_by_id(note_id)
     return map_note_to_read_schema(note)
 
 
 @inject
 async def delete_note(
-        interactor: FromDishka[NoteInteractor],
+        get_note_interactor: FromDishka[GetNoteInteractor],
+        delete_interactor: FromDishka[DeleteNoteInteractor],
         note_id: UUID,
         user: User = Depends(get_user_from_request),
 ):
-    note = await interactor.get_note_by_id(note_id)
+    note = await get_note_interactor.get_note_by_id(note_id)
     if not note:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -105,7 +113,7 @@ async def delete_note(
         )
 
     try:
-        await interactor.delete_note(note_id)
+        await delete_interactor.delete_note(note_id)
     except NoteNotFoundException:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -115,12 +123,13 @@ async def delete_note(
 
 @inject
 async def update_note(
-        interactor: FromDishka[NoteInteractor],
+        get_note_interactor: FromDishka[GetNoteInteractor],
+        update_interactor: FromDishka[UpdateNoteInteractor],
         note_id: UUID,
         note: UpdateNoteSchema,
         user: User = Depends(get_user_from_request),
 ):
-    existing_note = await interactor.get_note_by_id(note_id)
+    existing_note = await get_note_interactor.get_note_by_id(note_id)
     if not existing_note:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -136,7 +145,7 @@ async def update_note(
     data = map_update_schema_to_dto(note_id, note, existing_note)
 
     try:
-        updated_note = await interactor.update_note(data)
+        updated_note = await update_interactor.update_note(data)
     except NoteNotFoundException:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
