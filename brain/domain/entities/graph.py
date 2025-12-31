@@ -7,8 +7,9 @@ from brain.domain.entities.common import Entity
 class GraphNode(Entity):
     id: str
     title: str
-    has_keyword_note: bool
     kind: str
+    represents_keyword: bool | None = None
+    has_keyword_note: bool | None = None
 
 
 @dataclass

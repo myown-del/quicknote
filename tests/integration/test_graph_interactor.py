@@ -63,9 +63,9 @@ async def test_get_graph_without_query_returns_nodes_and_connections(
     graph = await interactor.get_graph(user_id=user.id)
 
     expected_nodes = {
-        f"keyword_note:{alpha_id}",
-        f"keyword_note:{beta_id}",
-        f"keyword_note:{gamma_id}",
+        f"note:{alpha_id}",
+        f"note:{beta_id}",
+        f"note:{gamma_id}",
         "keyword:Beta",
         "keyword:Gamma",
         "keyword:Orphan",
@@ -75,15 +75,15 @@ async def test_get_graph_without_query_returns_nodes_and_connections(
     nodes = node_by_id(graph.nodes)
     assert nodes["keyword:Beta"].has_keyword_note is True
     assert nodes["keyword:Orphan"].has_keyword_note is False
-    assert nodes[f"keyword_note:{alpha_id}"].has_keyword_note is True
-    assert nodes[f"keyword_note:{beta_id}"].has_keyword_note is True
+    assert nodes[f"note:{alpha_id}"].represents_keyword is True
+    assert nodes[f"note:{beta_id}"].represents_keyword is True
 
     expected_connections = {
-        (f"keyword_note:{alpha_id}", "keyword:Beta", "has_keyword"),
-        (f"keyword_note:{alpha_id}", "keyword:Orphan", "has_keyword"),
-        (f"keyword_note:{beta_id}", "keyword:Gamma", "has_keyword"),
-        (f"keyword_note:{alpha_id}", f"keyword_note:{beta_id}", "links_to"),
-        (f"keyword_note:{beta_id}", f"keyword_note:{gamma_id}", "links_to"),
+        (f"note:{alpha_id}", "keyword:Beta", "has_keyword"),
+        (f"note:{alpha_id}", "keyword:Orphan", "has_keyword"),
+        (f"note:{beta_id}", "keyword:Gamma", "has_keyword"),
+        (f"note:{alpha_id}", f"note:{beta_id}", "links_to"),
+        (f"note:{beta_id}", f"note:{gamma_id}", "links_to"),
     }
     assert connection_tuples(graph.connections) == expected_connections
 
@@ -103,7 +103,7 @@ async def test_get_graph_query_depth_limits_connected_nodes(
     )
     assert node_ids(graph_depth_0.nodes) == {
         "keyword:Beta",
-        f"keyword_note:{beta_id}",
+        f"note:{beta_id}",
     }
 
     graph_depth_1 = await interactor.get_graph(
@@ -115,9 +115,9 @@ async def test_get_graph_query_depth_limits_connected_nodes(
     assert {
         "keyword:Beta",
         "keyword:Gamma",
-        f"keyword_note:{alpha_id}",
-        f"keyword_note:{beta_id}",
-        f"keyword_note:{gamma_id}",
+        f"note:{alpha_id}",
+        f"note:{beta_id}",
+        f"note:{gamma_id}",
     }.issubset(node_ids(graph_depth_1.nodes))
 
     graph_depth_2 = await interactor.get_graph(
@@ -144,6 +144,6 @@ async def test_get_graph_query_returns_connected_nodes(
 
     assert node_ids(graph.nodes) == {
         "keyword:Orphan",
-        f"keyword_note:{alpha_id}",
+        f"note:{alpha_id}",
     }
-    assert f"keyword_note:{beta_id}" not in node_ids(graph.nodes)
+    assert f"note:{beta_id}" not in node_ids(graph.nodes)

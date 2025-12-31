@@ -147,20 +147,23 @@ class NotesGraphRepository(INotesGraphRepository):
             "MATCH (n:Note {user_id: $user_id, title: k.name}) "
             "WHERE n.represents_keyword_id IS NOT NULL "
             "} AS has_keyword_note, "
+            "NULL AS represents_keyword, "
             "k.name AS keyword_name, "
             "NULL AS note_id "
             "UNION "
             "MATCH (n:Note {user_id: $user_id}) "
-            "WHERE n.represents_keyword_id IS NOT NULL AND n.title IS NOT NULL "
+            "WHERE n.title IS NOT NULL "
             "RETURN DISTINCT "
-            "'keyword_note' AS kind, "
-            "'keyword_note:' + toString(n.id) AS id, "
+            "'note' AS kind, "
+            "'note:' + toString(n.id) AS id, "
             "n.title AS title, "
-            "true AS has_keyword_note, "
+            "NULL AS has_keyword_note, "
+            "(n.represents_keyword_id IS NOT NULL) AS represents_keyword, "
             "NULL AS keyword_name, "
             "toString(n.id) AS note_id "
             "} "
-            "RETURN kind, id, title, has_keyword_note, keyword_name, note_id"
+            "RETURN kind, id, title, has_keyword_note, represents_keyword, "
+            "keyword_name, note_id"
         )
 
         nodes_filtered_query = (
@@ -173,8 +176,7 @@ class NotesGraphRepository(INotesGraphRepository):
             "UNION "
             "WITH user_id, search_query "
             "MATCH (n:Note {user_id: user_id}) "
-            "WHERE n.represents_keyword_id IS NOT NULL "
-            "AND n.title IS NOT NULL "
+            "WHERE n.title IS NOT NULL "
             "AND toLower(n.title) CONTAINS toLower(search_query) "
             "RETURN n AS seed "
             "} "
@@ -182,20 +184,21 @@ class NotesGraphRepository(INotesGraphRepository):
             f"MATCH p=(seed)-[:HAS_KEYWORD|LINKS_TO*0..{depth}]-(node) "
             "WHERE all(n IN nodes(p) WHERE "
             "(n:Keyword AND n.user_id = user_id) "
-            "OR (n:Note AND n.user_id = user_id "
-            "AND n.represents_keyword_id IS NOT NULL "
-            "AND n.title IS NOT NULL)) "
+            "OR (n:Note AND n.user_id = user_id AND n.title IS NOT NULL)) "
             "WITH DISTINCT node, user_id "
             "RETURN "
-            "CASE WHEN node:Keyword THEN 'keyword' ELSE 'keyword_note' END AS kind, "
+            "CASE WHEN node:Keyword THEN 'keyword' ELSE 'note' END AS kind, "
             "CASE WHEN node:Keyword "
             "THEN 'keyword:' + node.name "
-            "ELSE 'keyword_note:' + toString(node.id) END AS id, "
+            "ELSE 'note:' + toString(node.id) END AS id, "
             "CASE WHEN node:Keyword THEN node.name ELSE node.title END AS title, "
             "CASE WHEN node:Keyword THEN EXISTS { "
             "MATCH (n:Note {user_id: user_id, title: node.name}) "
             "WHERE n.represents_keyword_id IS NOT NULL "
-            "} ELSE true END AS has_keyword_note, "
+            "} ELSE NULL END AS has_keyword_note, "
+            "CASE WHEN node:Note "
+            "THEN (node.represents_keyword_id IS NOT NULL) "
+            "ELSE NULL END AS represents_keyword, "
             "CASE WHEN node:Keyword THEN node.name ELSE NULL END AS keyword_name, "
             "CASE WHEN node:Note THEN toString(node.id) ELSE NULL END AS note_id"
         )
@@ -221,8 +224,9 @@ class NotesGraphRepository(INotesGraphRepository):
                 node = GraphNode(
                     id=record["id"],
                     title=record["title"],
-                    has_keyword_note=record["has_keyword_note"],
                     kind=record["kind"],
+                    represents_keyword=record["represents_keyword"],
+                    has_keyword_note=record["has_keyword_note"],
                 )
                 nodes.append(node)
                 if record["keyword_name"]:
@@ -236,7 +240,6 @@ class NotesGraphRepository(INotesGraphRepository):
             connections_query = (
                 "MATCH (n:Note)-[:HAS_KEYWORD]->(k:Keyword) "
                 "WHERE n.user_id = $user_id "
-                "AND n.represents_keyword_id IS NOT NULL "
                 "AND n.id IN $note_ids "
                 "AND k.user_id = $user_id "
                 "AND k.name IN $keyword_names "
@@ -249,8 +252,6 @@ class NotesGraphRepository(INotesGraphRepository):
                 "MATCH (a:Note)-[:LINKS_TO]->(b:Note) "
                 "WHERE a.user_id = $user_id "
                 "AND b.user_id = $user_id "
-                "AND a.represents_keyword_id IS NOT NULL "
-                "AND b.represents_keyword_id IS NOT NULL "
                 "AND a.id IN $note_ids "
                 "AND b.id IN $note_ids "
                 "RETURN DISTINCT "
@@ -272,11 +273,11 @@ class NotesGraphRepository(INotesGraphRepository):
                 if record["kind"] == "has_keyword":
                     to_id = f"keyword:{record['to_keyword']}"
                 else:
-                    to_id = f"keyword_note:{record['to_note_id']}"
+                    to_id = f"note:{record['to_note_id']}"
 
                 connections.append(
                     GraphConnection(
-                        from_id=f"keyword_note:{record['from_note_id']}",
+                        from_id=f"note:{record['from_note_id']}",
                         to_id=to_id,
                         kind=record["kind"],
                     )

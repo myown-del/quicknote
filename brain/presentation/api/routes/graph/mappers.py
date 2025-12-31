@@ -1,21 +1,38 @@
-from dataclasses import asdict
-
 from brain.domain.entities.graph import GraphData, GraphNode, GraphConnection
 from brain.presentation.api.routes.graph.models import (
     GraphSchema,
     GraphNodeSchema,
     GraphConnectionSchema,
+    GraphNodeKindEnum,
+    GraphNodeNoteSchema,
+    GraphNodeKeywordSchema,
 )
 
 
 def map_graph_node_to_schema(node: GraphNode) -> GraphNodeSchema:
-    return GraphNodeSchema.model_validate(asdict(node))
+    if node.kind == GraphNodeKindEnum.KEYWORD.value:
+        return GraphNodeKeywordSchema(
+            id=node.id,
+            type=GraphNodeKindEnum.KEYWORD,
+            title=node.title,
+        )
+
+    return GraphNodeNoteSchema(
+        id=node.id,
+        type=GraphNodeKindEnum.NOTE,
+        title=node.title,
+        represents_keyword=node.represents_keyword,
+    )
 
 
 def map_graph_connection_to_schema(
     connection: GraphConnection,
 ) -> GraphConnectionSchema:
-    return GraphConnectionSchema.model_validate(asdict(connection))
+    return GraphConnectionSchema(
+        from_id=connection.from_id,
+        to_id=connection.to_id,
+        kind=connection.kind,
+    )
 
 
 def map_graph_to_schema(graph: GraphData) -> GraphSchema:
