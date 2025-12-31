@@ -1,10 +1,9 @@
-from .notes.interactor import (
-    CreateNoteInteractor,
-    DeleteNoteInteractor,
-    GetNoteInteractor,
-    GetNotesInteractor,
-    SearchWikilinkSuggestionsInteractor,
-    UpdateNoteInteractor,
-)
+from .notes.create_note import CreateNoteInteractor
+from .notes.delete_note import DeleteNoteInteractor
+from .notes.get_note import GetNoteInteractor
+from .notes.get_notes import GetNotesInteractor
+from .notes.search_wikilink_suggestions import SearchWikilinkSuggestionsInteractor
+from .notes.update_note import UpdateNoteInteractor
+from .users.get_user import GetUserInteractor
 from .users.interactor import UserInteractor
 from .auth.session_interactor import TelegramBotAuthSessionInteractor
