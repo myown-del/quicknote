@@ -3,6 +3,7 @@ from dishka import Provider, Scope, provide
 from brain.application.interactors import (
     CreateNoteInteractor,
     DeleteNoteInteractor,
+    GetGraphInteractor,
     GetUserInteractor,
     GetNoteInteractor,
     GetNotesInteractor,
@@ -31,6 +32,7 @@ class InteractorProvider(Provider):
     get_search_wikilink_suggestions_interactor = provide(
         SearchWikilinkSuggestionsInteractor, scope=Scope.REQUEST
     )
+    get_get_graph_interactor = provide(GetGraphInteractor, scope=Scope.REQUEST)
     get_auth_interactor = provide(AuthInteractor, scope=Scope.REQUEST)
     get_telegram_bot_auth_session_interactor = provide(
         TelegramBotAuthSessionInteractor, scope=Scope.REQUEST

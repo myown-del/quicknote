@@ -1,6 +1,7 @@
 from uuid import UUID
 
 from brain.application.abstractions.repositories.notes_graph import INotesGraphRepository
+from brain.domain.entities.graph import GraphData
 from brain.domain.entities.note import Note
 
 
@@ -27,3 +28,11 @@ class DummyNotesGraphRepository(INotesGraphRepository):
         self, user_id: UUID, from_title: str, to_title: str
     ) -> int:
         return 0
+
+    async def get_graph(
+        self,
+        user_id: UUID,
+        query: str | None = None,
+        depth: int = 1,
+    ) -> GraphData:
+        return GraphData(nodes=[], connections=[])

@@ -4,6 +4,7 @@ from .notes.get_note import GetNoteInteractor
 from .notes.get_notes import GetNotesInteractor
 from .notes.search_wikilink_suggestions import SearchWikilinkSuggestionsInteractor
 from .notes.update_note import UpdateNoteInteractor
+from .graph.get_graph import GetGraphInteractor
 from .users.get_user import GetUserInteractor
 from .users.interactor import UserInteractor
 from .auth.session_interactor import TelegramBotAuthSessionInteractor

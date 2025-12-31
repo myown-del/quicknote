@@ -3,6 +3,7 @@ from typing import Protocol
 from uuid import UUID
 
 from brain.domain.entities.note import Note
+from brain.domain.entities.graph import GraphData
 
 
 class INotesGraphRepository(Protocol):
@@ -32,4 +33,13 @@ class INotesGraphRepository(Protocol):
     async def count_links_between_notes(
         self, user_id: UUID, from_title: str, to_title: str
     ) -> int:
+        raise NotImplementedError
+
+    @abstractmethod
+    async def get_graph(
+        self,
+        user_id: UUID,
+        query: str | None = None,
+        depth: int = 1,
+    ) -> GraphData:
         raise NotImplementedError
