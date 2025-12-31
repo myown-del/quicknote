@@ -27,7 +27,6 @@ async def test_wikilink_suggestions_include_keyword_notes_and_missing_keywords(
             by_user_telegram_id=user.telegram_id,
             title="Beta",
             text="Non keyword note",
-            represents_keyword=False,
         )
     )
     await interactor.create_note(
@@ -44,7 +43,6 @@ async def test_wikilink_suggestions_include_keyword_notes_and_missing_keywords(
             by_user_telegram_id=user.telegram_id,
             title="Links",
             text="See [[Beta]] and [[Gamma]] and [[Delta]]",
-            represents_keyword=False,
         )
     )
     await interactor.create_note(

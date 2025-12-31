@@ -1,6 +1,5 @@
 from dataclasses import dataclass, field
 from datetime import datetime
-from tkinter import N
 from uuid import UUID
 
 from brain.domain.entities.common import Entity
@@ -16,6 +15,6 @@ class Note(Entity):
     user_id: UUID
     title: str | None = None
     text: str | None = None
-    represents_keyword: bool = False
+    represents_keyword_id: UUID | None = None
     updated_at: datetime | None = None
     created_at: datetime | None = None

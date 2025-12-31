@@ -55,7 +55,7 @@ class NotesRepository(INotesRepository):
             return
         db_model.title = entity.title
         db_model.text = entity.text
-        db_model.represents_keyword = entity.represents_keyword
+        db_model.represents_keyword_id = entity.represents_keyword_id
         db_model.updated_at = entity.updated_at or datetime.utcnow()
         await self._session.commit()
 
@@ -84,7 +84,24 @@ class NotesRepository(INotesRepository):
             .select_from(NoteDB)
             .where(NoteDB.user_id == user_id)
             .where(NoteDB.title == title)
-            .where(NoteDB.represents_keyword.is_(True))
+            .where(NoteDB.represents_keyword_id.isnot(None))
+        )
+        if exclude_note_id:
+            query = query.where(NoteDB.id != exclude_note_id)
+        result = await self._session.execute(query)
+        return int(result.scalar() or 0)
+
+    async def count_keyword_notes_by_user_and_keyword_id(
+        self,
+        user_id: UUID,
+        keyword_id: UUID,
+        exclude_note_id: UUID | None = None,
+    ) -> int:
+        query = (
+            select(func.count())
+            .select_from(NoteDB)
+            .where(NoteDB.user_id == user_id)
+            .where(NoteDB.represents_keyword_id == keyword_id)
         )
         if exclude_note_id:
             query = query.where(NoteDB.id != exclude_note_id)
@@ -103,7 +120,7 @@ class NotesRepository(INotesRepository):
         keyword_note_stmt = (
             select(NoteDB.title)
             .where(NoteDB.user_id == user_id)
-            .where(NoteDB.represents_keyword.is_(True))
+            .where(NoteDB.represents_keyword_id.isnot(None))
             .where(NoteDB.title.isnot(None))
             .where(func.length(func.trim(NoteDB.title)) > 0)
             .where(func.lower(NoteDB.title).like(f"%{normalized_query}%"))
@@ -138,7 +155,7 @@ class NotesRepository(INotesRepository):
                 ~exists()
                 .where(NoteDB.user_id == KeywordDB.user_id)
                 .where(NoteDB.title == KeywordDB.name)
-                .where(NoteDB.represents_keyword.is_(True))
+                .where(NoteDB.represents_keyword_id.isnot(None))
             )
             .order_by(KeywordDB.name.asc())
         )

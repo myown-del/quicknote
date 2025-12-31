@@ -15,7 +15,7 @@ class NotesGraphRepository(INotesGraphRepository):
         query = (
             "MERGE (n:Note {id: $id}) "
             "SET n.user_id = $user_id, n.title = $title, n.text = $text, "
-            "n.represents_keyword = $represents_keyword"
+            "n.represents_keyword_id = $represents_keyword_id"
         )
         async with self._driver.session(database=self._database) as session:
             await session.run(
@@ -24,7 +24,11 @@ class NotesGraphRepository(INotesGraphRepository):
                 user_id=str(note.user_id),
                 title=note.title,
                 text=note.text,
-                represents_keyword=note.represents_keyword,
+                represents_keyword_id=(
+                    str(note.represents_keyword_id)
+                    if note.represents_keyword_id is not None
+                    else None
+                ),
             )
 
     async def sync_connections(
@@ -32,7 +36,7 @@ class NotesGraphRepository(INotesGraphRepository):
         note: Note,
         link_targets: list[str],
         previous_title: str | None = None,
-        previous_represents_keyword: bool | None = None,
+        previous_represents_keyword_id: UUID | None = None,
     ):
         async with self._driver.session(database=self._database) as session:
             await session.run(
@@ -42,8 +46,8 @@ class NotesGraphRepository(INotesGraphRepository):
                 id=str(note.id),
             )
 
-            if previous_represents_keyword and (
-                not note.represents_keyword or previous_title != note.title
+            if previous_represents_keyword_id and (
+                note.represents_keyword_id is None or previous_title != note.title
             ):
                 await session.run(
                     "MATCH (source:Note)-[r:LINKS_TO]->(target:Note {id: $id}) "
@@ -68,14 +72,16 @@ class NotesGraphRepository(INotesGraphRepository):
                 await session.run(
                     "MATCH (source:Note {id: $id}) "
                     "UNWIND $targets AS target "
-                    "MATCH (target_note:Note {user_id: $user_id, title: target, represents_keyword: true}) "
+                    "MATCH (target_note:Note {user_id: $user_id, title: target}) "
+                    "WHERE target_note.represents_keyword_id IS NOT NULL "
+                    "AND target_note.id <> $id "
                     "MERGE (source)-[:LINKS_TO]->(target_note)",
                     id=str(note.id),
                     user_id=str(note.user_id),
                     targets=link_targets,
                 )
 
-            if note.title and note.represents_keyword:
+            if note.title and note.represents_keyword_id:
                 await session.run(
                     "MATCH (target:Note {id: $id}) "
                     "MATCH (k:Keyword {user_id: $user_id, name: $title}) "

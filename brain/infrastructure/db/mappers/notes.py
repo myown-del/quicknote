@@ -8,7 +8,7 @@ def map_note_to_dm(note: NoteDB) -> Note:
         user_id=note.user_id,
         title=note.title,
         text=note.text,
-        represents_keyword=note.represents_keyword,
+        represents_keyword_id=note.represents_keyword_id,
         created_at=note.created_at,
         updated_at=note.updated_at
     )
@@ -20,7 +20,7 @@ def map_note_to_db(note: Note) -> NoteDB:
         user_id=note.user_id,
         title=note.title,
         text=note.text,
-        represents_keyword=note.represents_keyword,
+        represents_keyword_id=note.represents_keyword_id,
         created_at=note.created_at,
         updated_at=note.updated_at
     )

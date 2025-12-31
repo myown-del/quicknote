@@ -45,6 +45,15 @@ class INotesRepository(Protocol):
         raise NotImplementedError
 
     @abstractmethod
+    async def count_keyword_notes_by_user_and_keyword_id(
+        self,
+        user_id: UUID,
+        keyword_id: UUID,
+        exclude_note_id: UUID | None = None,
+    ) -> int:
+        raise NotImplementedError
+
+    @abstractmethod
     async def search_wikilink_suggestions(
         self,
         user_id: UUID,

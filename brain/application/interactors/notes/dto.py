@@ -16,4 +16,3 @@ class UpdateNote:
     title: str | None
     text: str | None
     represents_keyword: bool | None = None
-

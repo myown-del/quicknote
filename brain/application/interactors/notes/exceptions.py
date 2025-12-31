@@ -8,3 +8,7 @@ class KeywordNoteTitleRequiredException(Exception):
 
 class KeywordNoteAlreadyExistsException(Exception):
     pass
+
+
+class KeywordNotFoundException(Exception):
+    pass

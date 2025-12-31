@@ -1,4 +1,3 @@
-from dataclasses import asdict
 from uuid import UUID
 
 from dishka import FromDishka
@@ -12,9 +11,16 @@ from brain.application.interactors.notes.exceptions import (
     NoteNotFoundException,
     KeywordNoteTitleRequiredException,
     KeywordNoteAlreadyExistsException,
+    KeywordNotFoundException,
 )
 from brain.domain.entities.user import User
 from brain.presentation.api.dependencies.auth import get_user_from_request
+from brain.presentation.api.routes.notes.mappers import (
+    map_create_schema_to_dto,
+    map_note_to_read_schema,
+    map_update_schema_to_dto,
+    map_wikilink_suggestion_to_schema,
+)
 from brain.presentation.api.routes.notes.models import (
     ReadNoteSchema,
     CreateNoteSchema,
@@ -30,7 +36,7 @@ async def get_notes(
 ):
     notes = await interactor.get_notes(user.telegram_id)
     return [
-        ReadNoteSchema.model_validate(asdict(note))
+        map_note_to_read_schema(note)
         for note in notes
     ]
 
@@ -46,7 +52,7 @@ async def get_wikilink_suggestions(
         query=query,
     )
     return [
-        WikilinkSuggestionSchema.model_validate(asdict(suggestion))
+        map_wikilink_suggestion_to_schema(suggestion)
         for suggestion in suggestions
     ]
 
@@ -57,12 +63,7 @@ async def create_note(
         note: CreateNoteSchema,
         user: User = Depends(get_user_from_request),
 ):
-    data = CreateNote(
-        by_user_telegram_id=user.telegram_id,
-        title=note.title,
-        text=note.text,
-        represents_keyword=note.represents_keyword,
-    )
+    data = map_create_schema_to_dto(note, user)
     try:
         note_id = await interactor.create_note(data)
     except KeywordNoteTitleRequiredException:
@@ -75,8 +76,13 @@ async def create_note(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Keyword note with this title already exists",
         )
+    except KeywordNotFoundException:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Keyword not found",
+        )
     note = await interactor.get_note_by_id(note_id)
-    return ReadNoteSchema.model_validate(asdict(note))
+    return map_note_to_read_schema(note)
 
 
 @inject
@@ -127,16 +133,7 @@ async def update_note(
             detail="Forbidden",
         )
 
-    payload = note.model_dump(exclude_unset=True)
-    data = UpdateNote(
-        note_id=note_id,
-        title=payload.get("title", existing_note.title),
-        text=payload.get("text", existing_note.text),
-        represents_keyword=payload.get(
-            "represents_keyword",
-            existing_note.represents_keyword,
-        ),
-    )
+    data = map_update_schema_to_dto(note_id, note, existing_note)
 
     try:
         updated_note = await interactor.update_note(data)
@@ -155,8 +152,13 @@ async def update_note(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Keyword note with this title already exists",
         )
+    except KeywordNotFoundException:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Keyword not found",
+        )
 
-    return ReadNoteSchema.model_validate(asdict(updated_note))
+    return map_note_to_read_schema(updated_note)
 
 
 def get_router() -> APIRouter:

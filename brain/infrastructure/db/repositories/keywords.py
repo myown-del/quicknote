@@ -5,6 +5,7 @@ from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from brain.application.abstractions.repositories.keywords import IKeywordsRepository
+from brain.domain.entities.keyword import Keyword
 from brain.infrastructure.db.models.keyword import KeywordDB
 from brain.infrastructure.db.models.note import NoteDB
 from brain.infrastructure.db.models.keyword import NoteKeywordDB
@@ -25,6 +26,40 @@ class KeywordsRepository(IKeywordsRepository):
             seen.add(trimmed)
             normalized.append(trimmed)
         return normalized
+
+    @staticmethod
+    def _map_keyword(db_model: KeywordDB) -> Keyword:
+        return Keyword(
+            id=db_model.id,
+            user_id=db_model.user_id,
+            name=db_model.name,
+            created_at=db_model.created_at,
+            updated_at=db_model.updated_at,
+        )
+
+    async def get_by_id(self, keyword_id: UUID) -> Keyword | None:
+        result = await self._session.execute(
+            select(KeywordDB).where(KeywordDB.id == keyword_id)
+        )
+        db_model = result.scalar()
+        if not db_model:
+            return None
+        return self._map_keyword(db_model)
+
+    async def get_by_user_and_name(
+        self,
+        user_id: UUID,
+        name: str,
+    ) -> Keyword | None:
+        result = await self._session.execute(
+            select(KeywordDB)
+            .where(KeywordDB.user_id == user_id)
+            .where(KeywordDB.name == name)
+        )
+        db_model = result.scalar()
+        if not db_model:
+            return None
+        return self._map_keyword(db_model)
 
     async def ensure_keywords(self, user_id: UUID, names: list[str]) -> None:
         normalized = self._normalize(names)
@@ -96,8 +131,7 @@ class KeywordsRepository(IKeywordsRepository):
             .where(
                 ~exists()
                 .where(NoteDB.user_id == user_id)
-                .where(NoteDB.represents_keyword.is_(True))
-                .where(func.coalesce(NoteDB.title, "") == KeywordDB.name)
+                .where(NoteDB.represents_keyword_id == KeywordDB.id)
             )
         )
         await self._session.execute(stmt)

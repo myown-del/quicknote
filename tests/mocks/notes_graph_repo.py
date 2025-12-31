@@ -13,7 +13,7 @@ class DummyNotesGraphRepository(INotesGraphRepository):
         note: Note,
         link_targets: list[str],
         previous_title: str | None = None,
-        previous_represents_keyword: bool | None = None,
+        previous_represents_keyword_id: UUID | None = None,
     ):
         return None
 

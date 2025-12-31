@@ -2,8 +2,18 @@ from abc import abstractmethod
 from typing import Protocol
 from uuid import UUID
 
+from brain.domain.entities.keyword import Keyword
+
 
 class IKeywordsRepository(Protocol):
+    @abstractmethod
+    async def get_by_id(self, keyword_id: UUID) -> Keyword | None:
+        raise NotImplementedError
+
+    @abstractmethod
+    async def get_by_user_and_name(self, user_id: UUID, name: str) -> Keyword | None:
+        raise NotImplementedError
+
     @abstractmethod
     async def ensure_keywords(self, user_id: UUID, names: list[str]) -> None:
         raise NotImplementedError
