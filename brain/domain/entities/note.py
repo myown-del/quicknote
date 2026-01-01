@@ -15,6 +15,6 @@ class Note(Entity):
     user_id: UUID
     title: str
     text: str | None = None
-    represents_keyword_id: UUID | None = None
+    represents_keyword_id: UUID
     updated_at: datetime | None = None
     created_at: datetime | None = None

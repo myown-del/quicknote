@@ -23,10 +23,10 @@ class NoteDB(Base, CreatedUpdatedMixin):
     )
     title: Mapped[str] = mapped_column(String(length=255), nullable=False)
     text: Mapped[str | None] = mapped_column(String(length=4096), nullable=True)
-    represents_keyword_id: Mapped[UUID | None] = mapped_column(
+    represents_keyword_id: Mapped[UUID] = mapped_column(
         Uuid,
-        ForeignKey("keywords.id", ondelete="SET NULL", onupdate="CASCADE"),
-        nullable=True,
+        ForeignKey("keywords.id", ondelete="CASCADE", onupdate="CASCADE"),
+        nullable=False,
     )
 
     user = relationship("UserDB", back_populates="notes", lazy="selectin")

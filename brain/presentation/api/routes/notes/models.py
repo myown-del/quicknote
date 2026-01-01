@@ -8,7 +8,6 @@ class ReadNoteSchema(BaseModel):
     id: UUID
     title: str
     text: str | None
-    represents_keyword: bool
     created_at: datetime
     updated_at: datetime
 

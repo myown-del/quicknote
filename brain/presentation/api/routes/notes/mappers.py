@@ -17,7 +17,6 @@ from brain.application.abstractions.repositories.models import WikilinkSuggestio
 def map_note_to_read_schema(note: Note) -> ReadNoteSchema:
     payload = asdict(note)
     payload.pop("represents_keyword_id", None)
-    payload["represents_keyword"] = note.represents_keyword_id is not None
     return ReadNoteSchema.model_validate(payload)
 
 

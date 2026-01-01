@@ -16,8 +16,8 @@ def normalize_keyword_names(names: list[str]) -> list[str]:
 
 def collect_cleanup_keyword_names(
     link_targets: list[str],
-    represents_keyword_id: UUID | None,
-    title: str | None,
+    represents_keyword_id: UUID,
+    title: str,
 ) -> list[str]:
     names = list(link_targets)
     if represents_keyword_id and title:

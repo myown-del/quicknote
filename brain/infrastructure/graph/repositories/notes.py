@@ -25,11 +25,7 @@ class NotesGraphRepository(INotesGraphRepository):
                 user_id=str(note.user_id),
                 title=note.title,
                 text=note.text,
-                represents_keyword_id=(
-                    str(note.represents_keyword_id)
-                    if note.represents_keyword_id is not None
-                    else None
-                ),
+                represents_keyword_id=str(note.represents_keyword_id),
             )
 
     async def sync_connections(
@@ -47,9 +43,7 @@ class NotesGraphRepository(INotesGraphRepository):
                 id=str(note.id),
             )
 
-            if previous_represents_keyword_id and (
-                note.represents_keyword_id is None or previous_title != note.title
-            ):
+            if previous_represents_keyword_id and previous_title != note.title:
                 await session.run(
                     "MATCH (source:Note)-[r:LINKS_TO]->(target:Note {id: $id}) "
                     "MATCH (source)-[:HAS_KEYWORD]->(:Keyword {user_id: $user_id, name: $prev_title}) "
@@ -82,17 +76,16 @@ class NotesGraphRepository(INotesGraphRepository):
                     targets=link_targets,
                 )
 
-            if note.title and note.represents_keyword_id:
-                await session.run(
-                    "MATCH (target:Note {id: $id}) "
-                    "MATCH (k:Keyword {user_id: $user_id, name: $title}) "
-                    "MATCH (source:Note)-[:HAS_KEYWORD]->(k) "
-                    "WHERE source.id <> target.id "
-                    "MERGE (source)-[:LINKS_TO]->(target)",
-                    id=str(note.id),
-                    user_id=str(note.user_id),
-                    title=note.title,
-                )
+            await session.run(
+                "MATCH (target:Note {id: $id}) "
+                "MATCH (k:Keyword {user_id: $user_id, name: $title}) "
+                "MATCH (source:Note)-[:HAS_KEYWORD]->(k) "
+                "WHERE source.id <> target.id "
+                "MERGE (source)-[:LINKS_TO]->(target)",
+                id=str(note.id),
+                user_id=str(note.user_id),
+                title=note.title,
+            )
 
     async def delete_note(self, note_id: UUID):
         async with self._driver.session(database=self._database) as session:
