@@ -14,7 +14,7 @@ class Note(Entity):
     id: UUID | None = field(default=None, kw_only=True)
     user_id: UUID
     title: str
-    text: str | None = None
+    text: str | None = field(default=None, kw_only=True)
     represents_keyword_id: UUID
-    updated_at: datetime | None = None
-    created_at: datetime | None = None
+    updated_at: datetime | None = field(default=None, kw_only=True)
+    created_at: datetime | None = field(default=None, kw_only=True)
