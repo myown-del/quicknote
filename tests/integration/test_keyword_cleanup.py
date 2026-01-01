@@ -65,7 +65,6 @@ async def test_keyword_note_creates_keyword_without_link(
             by_user_telegram_id=user.telegram_id,
             title="Atlas",
             text="No links here",
-            represents_keyword=True,
         )
     )
 

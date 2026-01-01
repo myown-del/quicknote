@@ -19,7 +19,6 @@ async def test_wikilink_suggestions_include_keyword_notes_and_missing_keywords(
             by_user_telegram_id=user.telegram_id,
             title="Alpha",
             text="Alpha text",
-            represents_keyword=True,
         )
     )
     await create_interactor.create_note(
@@ -34,7 +33,6 @@ async def test_wikilink_suggestions_include_keyword_notes_and_missing_keywords(
             by_user_telegram_id=user.telegram_id,
             title="Zeta",
             text="Zeta text",
-            represents_keyword=True,
         )
     )
 
@@ -50,7 +48,6 @@ async def test_wikilink_suggestions_include_keyword_notes_and_missing_keywords(
             by_user_telegram_id=user.telegram_id,
             title="Delta",
             text="Delta text",
-            represents_keyword=True,
         )
     )
 
@@ -59,5 +56,5 @@ async def test_wikilink_suggestions_include_keyword_notes_and_missing_keywords(
         query="ta",
     )
 
-    assert [s.title for s in suggestions] == ["Delta", "Zeta", "Beta"]
-    assert [s.represents_keyword for s in suggestions] == [True, True, False]
+    assert [s.title for s in suggestions] == ["Beta", "Delta", "Zeta"]
+    assert [s.represents_keyword for s in suggestions] == [True, True, True]

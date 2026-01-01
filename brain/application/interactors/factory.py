@@ -12,6 +12,7 @@ from brain.application.interactors import (
     UserInteractor,
 )
 from brain.application.services.keyword_notes import KeywordNoteService
+from brain.application.services.note_titles import NoteTitleService
 from brain.application.services.note_keyword_sync import NoteKeywordSyncService
 from brain.application.interactors.auth.interactor import AuthInteractor
 from brain.application.interactors.auth.session_interactor import (
@@ -23,6 +24,7 @@ class InteractorProvider(Provider):
     get_user_interactor = provide(UserInteractor, scope=Scope.REQUEST)
     get_get_user_interactor = provide(GetUserInteractor, scope=Scope.REQUEST)
     get_keyword_note_service = provide(KeywordNoteService, scope=Scope.REQUEST)
+    get_note_title_service = provide(NoteTitleService, scope=Scope.REQUEST)
     get_note_keyword_sync_service = provide(NoteKeywordSyncService, scope=Scope.REQUEST)
     get_create_note_interactor = provide(CreateNoteInteractor, scope=Scope.REQUEST)
     get_update_note_interactor = provide(UpdateNoteInteractor, scope=Scope.REQUEST)

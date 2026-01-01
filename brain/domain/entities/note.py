@@ -13,7 +13,7 @@ class Note(Entity):
 
     id: UUID | None = field(default=None, kw_only=True)
     user_id: UUID
-    title: str | None = None
+    title: str
     text: str | None = None
     represents_keyword_id: UUID | None = None
     updated_at: datetime | None = None

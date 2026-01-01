@@ -15,9 +15,9 @@ from brain.application.interactors import (
 )
 from brain.application.interactors.notes.exceptions import (
     NoteNotFoundException,
-    KeywordNoteTitleRequiredException,
-    KeywordNoteAlreadyExistsException,
     KeywordNotFoundException,
+    NoteTitleAlreadyExistsException,
+    NoteTitleRequiredException,
 )
 from brain.domain.entities.user import User
 from brain.presentation.api.dependencies.auth import get_user_from_request
@@ -73,15 +73,15 @@ async def create_note(
     data = map_create_schema_to_dto(note, user)
     try:
         note_id = await create_interactor.create_note(data)
-    except KeywordNoteTitleRequiredException:
+    except NoteTitleRequiredException:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Keyword note requires a title",
+            detail="Note title cannot be null",
         )
-    except KeywordNoteAlreadyExistsException:
+    except NoteTitleAlreadyExistsException:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Keyword note with this title already exists",
+            detail="Note title must be unique",
         )
     except KeywordNotFoundException:
         raise HTTPException(
@@ -151,15 +151,15 @@ async def update_note(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Note not found"
         )
-    except KeywordNoteTitleRequiredException:
+    except NoteTitleRequiredException:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Keyword note requires a title",
+            detail="Note title cannot be null",
         )
-    except KeywordNoteAlreadyExistsException:
+    except NoteTitleAlreadyExistsException:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Keyword note with this title already exists",
+            detail="Note title must be unique",
         )
     except KeywordNotFoundException:
         raise HTTPException(

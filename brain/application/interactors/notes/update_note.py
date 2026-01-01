@@ -9,6 +9,7 @@ from brain.application.abstractions.repositories.notes_graph import (
 from brain.application.interactors.notes.dto import UpdateNote
 from brain.application.interactors.notes.exceptions import NoteNotFoundException
 from brain.application.services.keyword_notes import KeywordNoteService
+from brain.application.services.note_titles import NoteTitleService
 from brain.application.services.note_keyword_sync import NoteKeywordSyncService
 from brain.domain.entities.note import Note
 from brain.domain.services.wikilinks import extract_link_targets
@@ -23,12 +24,14 @@ class UpdateNoteInteractor:
         notes_graph_repo: INotesGraphRepository,
         keywords_repo: IKeywordsRepository,
         keyword_note_service: KeywordNoteService,
+        note_title_service: NoteTitleService,
         keyword_sync_service: NoteKeywordSyncService,
     ):
         self._notes_repo = notes_repo
         self._notes_graph_repo = notes_graph_repo
         self._keywords_repo = keywords_repo
         self._keyword_note_service = keyword_note_service
+        self._note_title_service = note_title_service
         self._keyword_sync_service = keyword_sync_service
 
     async def update_note(self, note_data: UpdateNote) -> Note:
@@ -46,19 +49,17 @@ class UpdateNoteInteractor:
             created_at=note.created_at,
         )
 
-        note.title = note_data.title
+        title = await self._note_title_service.ensure_update_title(
+            user_id=note.user_id,
+            title=note_data.title,
+            exclude_note_id=note.id,
+        )
+        note.title = title
         note.text = note_data.text
 
-        represents_keyword = (
-            note_data.represents_keyword
-            if note_data.represents_keyword is not None
-            else note.represents_keyword_id is not None
-        )
-        note.represents_keyword_id = await self._keyword_note_service.validate_keyword_note(
+        note.represents_keyword_id = await self._keyword_note_service.ensure_keyword_for_title(
             user_id=note.user_id,
             title=note.title,
-            represents_keyword=represents_keyword,
-            exclude_note_id=note.id,
         )
 
         note.updated_at = datetime.utcnow()

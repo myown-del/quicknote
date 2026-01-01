@@ -18,7 +18,6 @@ async def seed_graph_data(
             by_user_telegram_id=user.telegram_id,
             title="Alpha",
             text="links [[Beta]] and [[Orphan]]",
-            represents_keyword=True,
         )
     )
     beta_id = await create_interactor.create_note(
@@ -26,7 +25,6 @@ async def seed_graph_data(
             by_user_telegram_id=user.telegram_id,
             title="Beta",
             text="see [[Gamma]]",
-            represents_keyword=True,
         )
     )
     gamma_id = await create_interactor.create_note(
@@ -34,7 +32,6 @@ async def seed_graph_data(
             by_user_telegram_id=user.telegram_id,
             title="Gamma",
             text="",
-            represents_keyword=True,
         )
     )
     return alpha_id, beta_id, gamma_id

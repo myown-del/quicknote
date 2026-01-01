@@ -36,6 +36,15 @@ class INotesRepository(Protocol):
         raise NotImplementedError
 
     @abstractmethod
+    async def count_notes_by_user_and_title(
+        self,
+        user_id: UUID,
+        title: str,
+        exclude_note_id: UUID | None = None,
+    ) -> int:
+        raise NotImplementedError
+
+    @abstractmethod
     async def count_keyword_notes_by_user_and_title(
         self,
         user_id: UUID,

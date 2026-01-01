@@ -1,12 +1,12 @@
 from datetime import datetime
 from uuid import UUID
 
-from pydantic import BaseModel
+from pydantic import BaseModel, model_validator
 
 
 class ReadNoteSchema(BaseModel):
     id: UUID
-    title: str | None
+    title: str
     text: str | None
     represents_keyword: bool
     created_at: datetime
@@ -16,13 +16,11 @@ class ReadNoteSchema(BaseModel):
 class CreateNoteSchema(BaseModel):
     title: str | None = None
     text: str | None = None
-    represents_keyword: bool = False
 
 
 class UpdateNoteSchema(BaseModel):
     title: str | None = None
     text: str | None = None
-    represents_keyword: bool | None = None
 
 
 class WikilinkSuggestionSchema(BaseModel):

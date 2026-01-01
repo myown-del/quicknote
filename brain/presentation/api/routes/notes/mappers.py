@@ -29,7 +29,6 @@ def map_create_schema_to_dto(
         by_user_telegram_id=user.telegram_id,
         title=schema.title,
         text=schema.text,
-        represents_keyword=schema.represents_keyword,
     )
 
 
@@ -43,11 +42,6 @@ def map_update_schema_to_dto(
         note_id=note_id,
         title=payload.get("title", existing_note.title),
         text=payload.get("text", existing_note.text),
-        represents_keyword=(
-            payload["represents_keyword"]
-            if "represents_keyword" in payload
-            else None
-        ),
     )
 
 

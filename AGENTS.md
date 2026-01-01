@@ -1,10 +1,3 @@
-Below is a **clean, copy-paste-ready set of rules** you can put directly into a **Cursor rules file** (e.g. `.cursorrules` or `cursor-rules.md`).
-They are phrased as **actionable, enforceable constraints**, not theory.
-
----
-
-# Clean Architecture – Use Case & Domain Rules
-
 ## 1. Use Case (Interactor) Rules
 
 * Each **use case (interactor)** MUST represent **one application action** (e.g. *CreateNote*, *UpdateNote*).

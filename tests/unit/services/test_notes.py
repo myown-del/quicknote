@@ -1,41 +1,53 @@
+from uuid import UUID, uuid4
+
 import pytest
 
-from brain.domain.exceptions import (
-    KeywordNoteAlreadyExistsError,
-    KeywordNoteTitleRequiredError,
+from brain.application.interactors.notes.exceptions import (
+    NoteTitleAlreadyExistsException,
+    NoteTitleRequiredException,
 )
-from brain.domain.services.notes import ensure_keyword_note_valid
+from brain.application.services.note_titles import NoteTitleService
 
 
-def test_non_keyword_note_passes():
-    ensure_keyword_note_valid(
-        title=None,
-        represents_keyword=False,
-        existing_keyword_count=0,
-    )
+class DummyNotesRepository:
+    def __init__(self, existing_titles: dict[UUID, set[str]]):
+        self._existing_titles = existing_titles
+
+    async def count_notes_by_user_and_title(
+        self,
+        user_id: UUID,
+        title: str,
+        exclude_note_id: UUID | None = None,
+    ) -> int:
+        return 1 if title in self._existing_titles.get(user_id, set()) else 0
 
 
-def test_keyword_note_requires_title():
-    with pytest.raises(KeywordNoteTitleRequiredError):
-        ensure_keyword_note_valid(
-            title=None,
-            represents_keyword=True,
-            existing_keyword_count=0,
-        )
+@pytest.mark.asyncio
+async def test_create_title_autogenerates_first_free_untitled():
+    user_id = uuid4()
+    repo = DummyNotesRepository(existing_titles={user_id: {"Untitled 1"}})
+    service = NoteTitleService(repo)
+
+    title = await service.resolve_create_title(user_id=user_id, title=None)
+
+    assert title == "Untitled 2"
 
 
-def test_keyword_note_must_be_unique():
-    with pytest.raises(KeywordNoteAlreadyExistsError):
-        ensure_keyword_note_valid(
-            title="Keyword",
-            represents_keyword=True,
-            existing_keyword_count=1,
-        )
+@pytest.mark.asyncio
+async def test_update_title_requires_value():
+    user_id = uuid4()
+    repo = DummyNotesRepository(existing_titles={})
+    service = NoteTitleService(repo)
+
+    with pytest.raises(NoteTitleRequiredException):
+        await service.ensure_update_title(user_id=user_id, title=None)
 
 
-def test_keyword_note_ok_when_unique():
-    ensure_keyword_note_valid(
-        title="Keyword",
-        represents_keyword=True,
-        existing_keyword_count=0,
-    )
+@pytest.mark.asyncio
+async def test_unique_title_validation_rejects_duplicates():
+    user_id = uuid4()
+    repo = DummyNotesRepository(existing_titles={user_id: {"Dup"}})
+    service = NoteTitleService(repo)
+
+    with pytest.raises(NoteTitleAlreadyExistsException):
+        await service.ensure_unique_title(user_id=user_id, title="Dup")

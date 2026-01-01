@@ -3,13 +3,12 @@ from dishka import AsyncContainer
 
 from brain.application.interactors import (
     CreateNoteInteractor,
-    GetNoteInteractor,
     UpdateNoteInteractor,
 )
 from brain.application.interactors.notes.dto import CreateNote, UpdateNote
 from brain.application.interactors.notes.exceptions import (
-    KeywordNoteAlreadyExistsException,
-    KeywordNoteTitleRequiredException,
+    NoteTitleAlreadyExistsException,
+    NoteTitleRequiredException,
 )
 from brain.application.interactors.users.exceptions import UserNotFoundException
 from brain.domain.entities.user import User
@@ -32,11 +31,11 @@ async def test_note_creation(dishka_request: AsyncContainer, user: User, repo_hu
     assert note.user_id == user.id
     assert note.title == data.title
     assert note.text == data.text
-    assert note.represents_keyword_id is None
+    assert note.represents_keyword_id is not None
 
 
 @pytest.mark.asyncio
-async def test_keyword_note_requires_title(
+async def test_note_autogenerates_title_when_missing(
     dishka_request: AsyncContainer,
     user: User,
     repo_hub: RepositoryHub,
@@ -47,54 +46,44 @@ async def test_keyword_note_requires_title(
         by_user_telegram_id=user.telegram_id,
         title=None,
         text="Some note text",
-        represents_keyword=True,
     )
-    with pytest.raises(KeywordNoteTitleRequiredException):
-        await create_interactor.create_note(data)
+    note_id = await create_interactor.create_note(data)
+    note = await repo_hub.notes.get_by_id(note_id)
+    assert note is not None
+    assert note.title.startswith("Untitled ")
+    assert note.represents_keyword_id is not None
 
 
 @pytest.mark.asyncio
-async def test_keyword_note_unique_by_title(
+async def test_note_unique_by_title(
     dishka_request: AsyncContainer,
     user: User,
     repo_hub: RepositoryHub,
 ):
     create_interactor = await dishka_request.get(CreateNoteInteractor)
-    get_note_interactor = await dishka_request.get(GetNoteInteractor)
 
     await create_interactor.create_note(
         CreateNote(
             by_user_telegram_id=user.telegram_id,
             title="Keyword",
             text="First",
-            represents_keyword=True,
         )
     )
-    with pytest.raises(KeywordNoteAlreadyExistsException):
+    with pytest.raises(NoteTitleAlreadyExistsException):
         await create_interactor.create_note(
             CreateNote(
                 by_user_telegram_id=user.telegram_id,
                 title="Keyword",
                 text="Second",
-                represents_keyword=True,
             )
         )
 
-    note_id = await create_interactor.create_note(
-        CreateNote(
-            by_user_telegram_id=user.telegram_id,
-            title="Keyword",
-            text="Non keyword note",
-        )
-    )
-    note = await get_note_interactor.get_note_by_id(note_id)
-    assert note is not None
-    assert note.title == "Keyword"
-    assert note.represents_keyword_id is None
+    notes = await repo_hub.notes.get_by_user_telegram_id(user.telegram_id)
+    assert [note.title for note in notes].count("Keyword") == 1
 
 
 @pytest.mark.asyncio
-async def test_keyword_note_update_validation(
+async def test_note_update_requires_title(
     dishka_request: AsyncContainer,
     user: User,
     repo_hub: RepositoryHub,
@@ -109,19 +98,18 @@ async def test_keyword_note_update_validation(
             text="Note",
         )
     )
-    with pytest.raises(KeywordNoteTitleRequiredException):
+    with pytest.raises(NoteTitleRequiredException):
         await update_interactor.update_note(
             UpdateNote(
                 note_id=note_id,
                 title=None,
                 text="Note",
-                represents_keyword=True,
             )
         )
 
 
 @pytest.mark.asyncio
-async def test_keyword_note_duplicate_title_conflict(
+async def test_note_duplicate_title_conflict(
     dishka_request: AsyncContainer,
     user: User,
     repo_hub: RepositoryHub,
@@ -134,25 +122,23 @@ async def test_keyword_note_duplicate_title_conflict(
             by_user_telegram_id=user.telegram_id,
             title="Omega",
             text="Keyword note",
-            represents_keyword=True,
         )
     )
 
     note_id = await create_interactor.create_note(
         CreateNote(
             by_user_telegram_id=user.telegram_id,
-            title="Omega",
+            title="Sigma",
             text="Regular note",
         )
     )
 
-    with pytest.raises(KeywordNoteAlreadyExistsException):
+    with pytest.raises(NoteTitleAlreadyExistsException):
         await update_interactor.update_note(
             UpdateNote(
                 note_id=note_id,
                 title="Omega",
                 text="Regular note",
-                represents_keyword=True,
             )
         )
 

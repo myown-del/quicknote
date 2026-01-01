@@ -73,6 +73,23 @@ class NotesRepository(INotesRepository):
         await self._session.delete(db_model)
         await self._session.commit()
 
+    async def count_notes_by_user_and_title(
+        self,
+        user_id: UUID,
+        title: str,
+        exclude_note_id: UUID | None = None,
+    ) -> int:
+        query = (
+            select(func.count())
+            .select_from(NoteDB)
+            .where(NoteDB.user_id == user_id)
+            .where(NoteDB.title == title)
+        )
+        if exclude_note_id:
+            query = query.where(NoteDB.id != exclude_note_id)
+        result = await self._session.execute(query)
+        return int(result.scalar() or 0)
+
     async def count_keyword_notes_by_user_and_title(
         self,
         user_id: UUID,
