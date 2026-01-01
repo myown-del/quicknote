@@ -109,6 +109,16 @@ class KeywordsRepository(IKeywordsRepository):
         await self._session.execute(insert_stmt)
         await self._session.commit()
 
+    async def get_note_keyword_names(self, note_id: UUID) -> list[str]:
+        stmt = (
+            select(KeywordDB.name)
+            .join(NoteKeywordDB, NoteKeywordDB.keyword_id == KeywordDB.id)
+            .where(NoteKeywordDB.note_id == note_id)
+        )
+        result = await self._session.execute(stmt)
+        names = [row[0] for row in result.all() if row[0]]
+        return names
+
     async def delete_note_keywords(self, note_id: UUID) -> None:
         await self._session.execute(
             delete(NoteKeywordDB).where(NoteKeywordDB.note_id == note_id)

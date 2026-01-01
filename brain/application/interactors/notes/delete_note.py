@@ -6,7 +6,6 @@ from brain.application.abstractions.repositories.notes_graph import (
     INotesGraphRepository,
 )
 from brain.application.interactors.notes.exceptions import NoteNotFoundException
-from brain.domain.services.wikilinks import extract_link_targets
 
 from brain.domain.services.keywords import collect_cleanup_keyword_names
 
@@ -27,7 +26,7 @@ class DeleteNoteInteractor:
         if note is None:
             raise NoteNotFoundException()
 
-        link_targets = extract_link_targets(note.text or "")
+        link_targets = await self._keywords_repo.get_note_keyword_names(note_id)
         cleanup_names = collect_cleanup_keyword_names(
             link_targets=link_targets,
             represents_keyword_id=note.represents_keyword_id,

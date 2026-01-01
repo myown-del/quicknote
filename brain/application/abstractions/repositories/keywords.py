@@ -28,6 +28,10 @@ class IKeywordsRepository(Protocol):
         raise NotImplementedError
 
     @abstractmethod
+    async def get_note_keyword_names(self, note_id: UUID) -> list[str]:
+        raise NotImplementedError
+
+    @abstractmethod
     async def delete_note_keywords(self, note_id: UUID) -> None:
         raise NotImplementedError
 

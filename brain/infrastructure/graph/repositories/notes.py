@@ -91,7 +91,18 @@ class NotesGraphRepository(INotesGraphRepository):
         async with self._driver.session(database=self._database) as session:
             await session.run(
                 "MATCH (n:Note {id: $id}) "
-                "DETACH DELETE n",
+                "WITH n, n.user_id AS user_id "
+                "DETACH DELETE n "
+                "WITH user_id "
+                "MATCH (k:Keyword {user_id: user_id}) "
+                "WHERE NOT EXISTS { "
+                "MATCH (:Note)-[:HAS_KEYWORD]->(k) "
+                "} "
+                "AND NOT EXISTS { "
+                "MATCH (m:Note {user_id: user_id, title: k.name}) "
+                "WHERE m.represents_keyword_id IS NOT NULL "
+                "} "
+                "DETACH DELETE k",
                 id=str(note_id),
             )
 
@@ -214,6 +225,9 @@ class NotesGraphRepository(INotesGraphRepository):
             note_ids: list[str] = []
 
             async for record in result:
+                if record["kind"] == "keyword" and record["has_keyword_note"]:
+                    # Hide keyword nodes when a note represents that keyword.
+                    continue
                 node = GraphNode(
                     id=record["id"],
                     title=record["title"],

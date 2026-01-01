@@ -63,22 +63,17 @@ async def test_get_graph_without_query_returns_nodes_and_connections(
         f"note:{alpha_id}",
         f"note:{beta_id}",
         f"note:{gamma_id}",
-        "keyword:Beta",
-        "keyword:Gamma",
         "keyword:Orphan",
     }
     assert node_ids(graph.nodes) == expected_nodes
 
     nodes = node_by_id(graph.nodes)
-    assert nodes["keyword:Beta"].has_keyword_note is True
     assert nodes["keyword:Orphan"].has_keyword_note is False
     assert nodes[f"note:{alpha_id}"].represents_keyword is True
     assert nodes[f"note:{beta_id}"].represents_keyword is True
 
     expected_connections = {
-        (f"note:{alpha_id}", "keyword:Beta", "has_keyword"),
         (f"note:{alpha_id}", "keyword:Orphan", "has_keyword"),
-        (f"note:{beta_id}", "keyword:Gamma", "has_keyword"),
         (f"note:{alpha_id}", f"note:{beta_id}", "links_to"),
         (f"note:{beta_id}", f"note:{gamma_id}", "links_to"),
     }
@@ -99,7 +94,6 @@ async def test_get_graph_query_depth_limits_connected_nodes(
         depth=0,
     )
     assert node_ids(graph_depth_0.nodes) == {
-        "keyword:Beta",
         f"note:{beta_id}",
     }
 
@@ -110,8 +104,6 @@ async def test_get_graph_query_depth_limits_connected_nodes(
     )
     assert "keyword:Orphan" not in node_ids(graph_depth_1.nodes)
     assert {
-        "keyword:Beta",
-        "keyword:Gamma",
         f"note:{alpha_id}",
         f"note:{beta_id}",
         f"note:{gamma_id}",
