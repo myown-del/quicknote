@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from uuid import UUID
 
-from sqlalchemy import Uuid, String, Column, ForeignKey, UniqueConstraint
+from sqlalchemy import Uuid, String, Text, Column, ForeignKey, UniqueConstraint
 from sqlalchemy.orm import mapped_column, Mapped, relationship
 
 from brain.infrastructure.db.models.base import Base
@@ -22,7 +22,7 @@ class NoteDB(Base, CreatedUpdatedMixin):
         nullable=False
     )
     title: Mapped[str] = mapped_column(String(length=255), nullable=False)
-    text: Mapped[str | None] = mapped_column(String(length=4096), nullable=True)
+    text: Mapped[str | None] = mapped_column(Text, nullable=True)
     represents_keyword_id: Mapped[UUID] = mapped_column(
         Uuid,
         ForeignKey("keywords.id", ondelete="CASCADE", onupdate="CASCADE"),
