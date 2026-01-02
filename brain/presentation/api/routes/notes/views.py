@@ -2,7 +2,7 @@ from uuid import UUID
 
 from dishka import FromDishka
 from dishka.integrations.fastapi import inject
-from fastapi import Depends, APIRouter, HTTPException, Query
+from fastapi import Depends, APIRouter, HTTPException, Query, Response, UploadFile, File
 from starlette import status
 
 from brain.application.interactors import (
@@ -12,6 +12,8 @@ from brain.application.interactors import (
     GetNotesInteractor,
     SearchWikilinkSuggestionsInteractor,
     UpdateNoteInteractor,
+    ExportNotesInteractor,
+    ImportNotesInteractor,
 )
 from brain.application.interactors.notes.exceptions import (
     NoteNotFoundException,
@@ -170,6 +172,37 @@ async def update_note(
     return map_note_to_read_schema(updated_note)
 
 
+@inject
+async def export_notes(
+        interactor: FromDishka[ExportNotesInteractor],
+        user: User = Depends(get_user_from_request),
+):
+    zip_bytes = await interactor.export_notes(user.telegram_id)
+    return Response(
+        content=zip_bytes,
+        media_type="application/zip",
+        headers={"Content-Disposition": "attachment; filename=notes_export.zip"},
+    )
+
+
+@inject
+async def import_notes(
+        interactor: FromDishka[ImportNotesInteractor],
+        file: UploadFile = File(...),
+        user: User = Depends(get_user_from_request),
+):
+    if not file.filename.endswith(".zip"):
+        raise HTTPException(status_code=400, detail="File must be a .zip extension")
+
+    content = await file.read()
+    try:
+        await interactor.import_notes(user.telegram_id, content)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid zip file")
+
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
 def get_router() -> APIRouter:
     router = APIRouter(prefix='/notes')
     router.add_api_route(
@@ -210,5 +243,19 @@ def get_router() -> APIRouter:
         response_model=ReadNoteSchema,
         summary="Update note",
         status_code=status.HTTP_200_OK
+    )
+    router.add_api_route(
+        path='/export',
+        endpoint=export_notes,
+        methods=["GET"],
+        summary="Export notes",
+        status_code=status.HTTP_200_OK,
+    )
+    router.add_api_route(
+        path='/import',
+        endpoint=import_notes,
+        methods=["POST"],
+        summary="Import notes",
+        status_code=status.HTTP_204_NO_CONTENT,
     )
     return router

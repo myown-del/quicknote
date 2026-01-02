@@ -10,7 +10,9 @@ from brain.application.interactors import (
     SearchWikilinkSuggestionsInteractor,
     UpdateNoteInteractor,
     UserInteractor,
-)
+    ExportNotesInteractor,
+    ImportNotesInteractor,
+))
 from brain.application.services.keyword_notes import KeywordNoteService
 from brain.application.services.note_titles import NoteTitleService
 from brain.application.services.note_keyword_sync import NoteKeywordSyncService
@@ -39,3 +41,5 @@ class InteractorProvider(Provider):
     get_telegram_bot_auth_session_interactor = provide(
         TelegramBotAuthSessionInteractor, scope=Scope.REQUEST
     )
+    get_export_notes_interactor = provide(ExportNotesInteractor, scope=Scope.REQUEST)
+    get_import_notes_interactor = provide(ImportNotesInteractor, scope=Scope.REQUEST)

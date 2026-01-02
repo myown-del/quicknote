@@ -8,3 +8,5 @@ from .graph.get_graph import GetGraphInteractor
 from .users.get_user import GetUserInteractor
 from .users.interactor import UserInteractor
 from .auth.session_interactor import TelegramBotAuthSessionInteractor
+from .notes.export_notes import ExportNotesInteractor
+from .notes.import_notes import ImportNotesInteractor
