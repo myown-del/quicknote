@@ -4,11 +4,13 @@ from dishka.integrations.fastapi import FromDishka, inject
 from starlette import status
 
 from brain.infrastructure.s3.client import S3Client
+from brain.config.models import S3Config
 
 
 @inject
 async def upload_image(
     s3_client: FromDishka[S3Client],
+    s3_config: FromDishka[S3Config],
     file: UploadFile = File(...),
 ):
     content = await file.read()
@@ -16,7 +18,8 @@ async def upload_image(
     object_name = f"{uuid.uuid4()}.{extension}"
     
     url = s3_client.upload_file(content, object_name, content_type=file.content_type)
-    return {"url": "https://www.sdsd.com/wp-content/uploads/2020/04/New-SDSD.jpg"}
+    url = url.replace(s3_config.endpoint_url, s3_config.external_host)
+    return {"url": url}
 
 
 def get_router() -> APIRouter:

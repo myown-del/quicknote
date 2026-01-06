@@ -18,7 +18,8 @@ def client():
         port=8080
     )
     mock_config.s3 = S3Config(
-        endpoint_url="http://test",
+        external_host="http://localhost:9000",
+        endpoint_url="http://test:9000",
         access_key_id="test",
         secret_access_key="test",
         bucket_name="test-bucket"
@@ -26,7 +27,8 @@ def client():
     
     # Mock S3Client
     mock_s3_client = MagicMock(spec=S3Client)
-    mock_s3_client.upload_file.return_value = "http://test/bucket/image.jpg"
+    mock_s3_client.config = mock_config.s3
+    mock_s3_client.upload_file.return_value = "http://test:9000/test-bucket/image.jpg"
     
     # Provider
     class MockProvider(Provider):
@@ -51,4 +53,4 @@ def test_upload_image(client):
     files = {'file': ('test.jpg', b'content', 'image/jpeg')}
     response = client.post("/api/upload/image", files=files)
     assert response.status_code == 200
-    assert response.json() == {"url": "http://test/bucket/image.jpg"}
+    assert response.json() == {"url": "http://localhost:9000/test-bucket/image.jpg"}
