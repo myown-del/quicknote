@@ -66,6 +66,26 @@ async def get_wikilink_suggestions(
 
 
 @inject
+async def find_note(
+        interactor: FromDishka[GetNoteInteractor],
+        title: str = Query(..., min_length=1),
+        exact_match: bool = Query(False),
+        user: User = Depends(get_user_from_request),
+):
+    note = await interactor.get_note_by_title(
+        user_id=user.id,
+        title=title,
+        exact_match=exact_match,
+    )
+    if not note:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Note not found"
+        )
+    return map_note_to_read_schema(note)
+
+
+@inject
 async def create_note(
         create_interactor: FromDishka[CreateNoteInteractor],
         get_note_interactor: FromDishka[GetNoteInteractor],
@@ -219,6 +239,14 @@ def get_router() -> APIRouter:
         methods=["GET"],
         response_model=list[WikilinkSuggestionSchema],
         summary="Search wikilink suggestions",
+        status_code=status.HTTP_200_OK
+    )
+    router.add_api_route(
+        path='/find',
+        endpoint=find_note,
+        methods=["GET"],
+        response_model=ReadNoteSchema,
+        summary="Find note by title",
         status_code=status.HTTP_200_OK
     )
     router.add_api_route(

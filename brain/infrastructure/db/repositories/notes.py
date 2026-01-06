@@ -44,6 +44,21 @@ class NotesRepository(INotesRepository):
         if db_model:
             return map_note_to_dm(db_model)
 
+    async def get_by_title(self, user_id: UUID, title: str, exact_match: bool = False) -> Note | None:
+        query = (
+            select(NoteDB)
+            .where(NoteDB.user_id == user_id)
+        )
+        if exact_match:
+            query = query.where(NoteDB.title == title)
+        else:
+            query = query.where(func.lower(NoteDB.title) == title.lower())
+
+        result = await self._session.execute(query)
+        db_model = result.scalar()
+        if db_model:
+            return map_note_to_dm(db_model)
+
     async def update(self, entity: Note):
         query = (
             select(NoteDB)

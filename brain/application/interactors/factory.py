@@ -12,7 +12,7 @@ from brain.application.interactors import (
     UserInteractor,
     ExportNotesInteractor,
     ImportNotesInteractor,
-))
+)
 from brain.application.services.keyword_notes import KeywordNoteService
 from brain.application.services.note_titles import NoteTitleService
 from brain.application.services.note_keyword_sync import NoteKeywordSyncService

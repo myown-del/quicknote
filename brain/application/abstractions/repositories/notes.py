@@ -24,6 +24,10 @@ class INotesRepository(Protocol):
         raise NotImplementedError
 
     @abstractmethod
+    async def get_by_title(self, user_id: UUID, title: str, exact_match: bool = False) -> Note | None:
+        raise NotImplementedError
+
+    @abstractmethod
     async def update(self, entity: Note):
         raise NotImplementedError
 

@@ -1,7 +1,7 @@
 from dishka import Provider, Scope, provide, from_context
 
 from brain.application.abstractions.config.models import IDatabaseConfig, INeo4jConfig
-from brain.config.models import APIConfig, Config, BotConfig, AuthenticationConfig, RedisConfig
+from brain.config.models import APIConfig, Config, BotConfig, AuthenticationConfig, RedisConfig, S3Config
 
 
 class ConfigProvider(Provider):
@@ -11,6 +11,10 @@ class ConfigProvider(Provider):
     @provide
     def get_api_config(self, config: Config) -> APIConfig:
         return config.api
+
+    @provide
+    def get_s3_config(self, config: Config) -> S3Config:
+        return config.s3
 
     @provide
     def get_bot_config(self, config: Config) -> BotConfig:

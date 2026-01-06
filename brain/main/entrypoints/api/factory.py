@@ -14,6 +14,7 @@ from brain.presentation.api.factory import create_bare_app
 from brain.presentation.tgbot.provider import DispatcherProvider, BotProvider
 from brain.infrastructure.db.provider import DatabaseProvider
 from brain.infrastructure.graph.provider import Neo4jProvider
+from brain.infrastructure.s3.provider import S3Provider
 from brain.application.interactors.factory import InteractorProvider
 
 logger = logging.getLogger(__name__)
@@ -37,6 +38,7 @@ def create_app() -> FastAPI:
         DatabaseConfigProvider(),
         DatabaseProvider(),
         Neo4jProvider(),
+        S3Provider(),
         InteractorProvider(),
         JwtProvider(),
         DispatcherProvider(),

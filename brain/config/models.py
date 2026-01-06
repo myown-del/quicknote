@@ -76,11 +76,22 @@ class AuthenticationConfig:
 
 
 @dataclass
+class S3Config:
+    external_host: str
+    endpoint_url: str
+    access_key_id: str
+    secret_access_key: str
+    bucket_name: str
+    region_name: str = "us-east-1"
+
+
+@dataclass
 class Config:
     api: APIConfig
     auth: AuthenticationConfig
     db: DatabaseConfig
     redis: RedisConfig
     neo4j: Neo4jConfig
+    s3: S3Config
     bot: BotConfig
     environment: EnvironmentType

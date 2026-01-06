@@ -21,3 +21,10 @@ NEO4J__PASSWORD=neo4j
 NEO4J__DATABASE=neo4j
 
 BOT__TOKEN=xxxxxxxxxxxxxx:xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+
+S3__EXTERNAL_HOST=https://google.com
+S3__ENDPOINT_URL=http://localhost:9001
+S3__ACCESS_KEY_ID=minioadmin
+S3__SECRET_ACCESS_KEY=minioadmin
+S3__BUCKET_NAME=brain-bucket
+S3__REGION_NAME=us-east-1
