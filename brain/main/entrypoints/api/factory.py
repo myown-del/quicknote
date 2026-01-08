@@ -9,7 +9,7 @@ from brain.config.provider import ConfigProvider, DatabaseConfigProvider
 from brain.config.models import APIConfig, Config
 from brain.config.parser import load_config
 from brain.infrastructure.jwt.provider import JwtProvider
-from brain.log import setup_logging
+from brain.main.log import setup_logging
 from brain.presentation.api.factory import create_bare_app
 from brain.presentation.tgbot.provider import DispatcherProvider, BotProvider
 from brain.infrastructure.db.provider import DatabaseProvider
