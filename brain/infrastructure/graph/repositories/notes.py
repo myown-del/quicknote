@@ -13,11 +13,14 @@ class NotesGraphRepository(INotesGraphRepository):
         self._database = database
 
     async def upsert_note(self, note: Note):
-        query = (
-            "MERGE (n:Note {id: $id}) "
-            "SET n.user_id = $user_id, n.title = $title, n.text = $text, "
-            "n.represents_keyword_id = $represents_keyword_id"
-        )
+        query = """
+            MERGE (n:Note {id: $id})
+            SET
+                n.user_id = $user_id,
+                n.title = $title,
+                n.text = $text,
+                n.represents_keyword_id = $represents_keyword_id
+        """
         async with self._driver.session(database=self._database) as session:
             await session.run(
                 query,
@@ -37,17 +40,24 @@ class NotesGraphRepository(INotesGraphRepository):
     ):
         async with self._driver.session(database=self._database) as session:
             await session.run(
-                "MATCH (n:Note {id: $id}) "
-                "OPTIONAL MATCH (n)-[r:LINKS_TO|HAS_KEYWORD]->() "
-                "DELETE r",
+                """
+                MATCH (n:Note {id: $id})
+                OPTIONAL MATCH (n)-[r:LINKS_TO|HAS_KEYWORD]->()
+                DELETE r
+                """,
                 id=str(note.id),
             )
 
             if previous_represents_keyword_id and previous_title != note.title:
                 await session.run(
-                    "MATCH (source:Note)-[r:LINKS_TO]->(target:Note {id: $id}) "
-                    "MATCH (source)-[:HAS_KEYWORD]->(:Keyword {user_id: $user_id, name: $prev_title}) "
-                    "DELETE r",
+                    """
+                    MATCH (source:Note)-[r:LINKS_TO]->(target:Note {id: $id})
+                    MATCH (source)-[:HAS_KEYWORD]->(:Keyword {
+                        user_id: $user_id,
+                        name: $prev_title
+                    })
+                    DELETE r
+                    """,
                     id=str(note.id),
                     user_id=str(note.user_id),
                     prev_title=previous_title,
@@ -55,33 +65,40 @@ class NotesGraphRepository(INotesGraphRepository):
 
             if link_targets:
                 await session.run(
-                    "MATCH (source:Note {id: $id}) "
-                    "UNWIND $targets AS target "
-                    "MERGE (k:Keyword {user_id: $user_id, name: target}) "
-                    "MERGE (source)-[:HAS_KEYWORD]->(k)",
+                    """
+                    MATCH (source:Note {id: $id})
+                    UNWIND $targets AS target
+                    MERGE (k:Keyword {user_id: $user_id, name: target})
+                    MERGE (source)-[:HAS_KEYWORD]->(k)
+                    """,
                     id=str(note.id),
                     user_id=str(note.user_id),
                     targets=link_targets,
                 )
 
                 await session.run(
-                    "MATCH (source:Note {id: $id}) "
-                    "UNWIND $targets AS target "
-                    "MATCH (target_note:Note {user_id: $user_id, title: target}) "
-                    "WHERE target_note.represents_keyword_id IS NOT NULL "
-                    "AND target_note.id <> $id "
-                    "MERGE (source)-[:LINKS_TO]->(target_note)",
+                    """
+                    MATCH (source:Note {id: $id})
+                    UNWIND $targets AS target
+                    MATCH (target_note:Note {user_id: $user_id, title: target})
+                    WHERE
+                        target_note.represents_keyword_id IS NOT NULL
+                        AND target_note.id <> $id
+                    MERGE (source)-[:LINKS_TO]->(target_note)
+                    """,
                     id=str(note.id),
                     user_id=str(note.user_id),
                     targets=link_targets,
                 )
 
             await session.run(
-                "MATCH (target:Note {id: $id}) "
-                "MATCH (k:Keyword {user_id: $user_id, name: $title}) "
-                "MATCH (source:Note)-[:HAS_KEYWORD]->(k) "
-                "WHERE source.id <> target.id "
-                "MERGE (source)-[:LINKS_TO]->(target)",
+                """
+                MATCH (target:Note {id: $id})
+                MATCH (k:Keyword {user_id: $user_id, name: $title})
+                MATCH (source:Note)-[:HAS_KEYWORD]->(k)
+                WHERE source.id <> target.id
+                MERGE (source)-[:LINKS_TO]->(target)
+                """,
                 id=str(note.id),
                 user_id=str(note.user_id),
                 title=note.title,
@@ -90,27 +107,31 @@ class NotesGraphRepository(INotesGraphRepository):
     async def delete_note(self, note_id: UUID):
         async with self._driver.session(database=self._database) as session:
             await session.run(
-                "MATCH (n:Note {id: $id}) "
-                "WITH n, n.user_id AS user_id "
-                "DETACH DELETE n "
-                "WITH user_id "
-                "MATCH (k:Keyword {user_id: user_id}) "
-                "WHERE NOT EXISTS { "
-                "MATCH (:Note)-[:HAS_KEYWORD]->(k) "
-                "} "
-                "AND NOT EXISTS { "
-                "MATCH (m:Note {user_id: user_id, title: k.name}) "
-                "WHERE m.represents_keyword_id IS NOT NULL "
-                "} "
-                "DETACH DELETE k",
+                """
+                MATCH (n:Note {id: $id})
+                WITH n, n.user_id AS user_id
+                DETACH DELETE n
+                WITH user_id
+                MATCH (k:Keyword {user_id: user_id})
+                WHERE NOT EXISTS {
+                    MATCH (:Note)-[:HAS_KEYWORD]->(k)
+                }
+                AND NOT EXISTS {
+                    MATCH (m:Note {user_id: user_id, title: k.name})
+                    WHERE m.represents_keyword_id IS NOT NULL
+                }
+                DETACH DELETE k
+                """,
                 id=str(note_id),
             )
 
     async def count_notes_by_user_and_title(self, user_id: UUID, title: str) -> int:
         async with self._driver.session(database=self._database) as session:
             result = await session.run(
-                "MATCH (n:Note {user_id: $user_id, title: $title}) "
-                "RETURN count(n) AS c",
+                """
+                MATCH (n:Note {user_id: $user_id, title: $title})
+                RETURN count(n) AS c
+                """,
                 user_id=str(user_id),
                 title=title,
             )
@@ -122,11 +143,13 @@ class NotesGraphRepository(INotesGraphRepository):
     ) -> int:
         async with self._driver.session(database=self._database) as session:
             result = await session.run(
-                "MATCH (from:Note {user_id: $user_id, title: $from_title}) "
-                "MATCH (to:Note {user_id: $user_id, title: $to_title}) "
-                "OPTIONAL MATCH (from)-[direct:LINKS_TO]->(to) "
-                "OPTIONAL MATCH (from)-[:HAS_KEYWORD]->(k:Keyword)<-[:HAS_KEYWORD]-(to) "
-                "RETURN count(DISTINCT direct) + count(DISTINCT k) AS c",
+                """
+                MATCH (from:Note {user_id: $user_id, title: $from_title})
+                MATCH (to:Note {user_id: $user_id, title: $to_title})
+                OPTIONAL MATCH (from)-[direct:LINKS_TO]->(to)
+                OPTIONAL MATCH (from)-[:HAS_KEYWORD]->(k:Keyword)<-[:HAS_KEYWORD]-(to)
+                RETURN count(DISTINCT direct) + count(DISTINCT k) AS c
+                """,
                 user_id=str(user_id),
                 from_title=from_title,
                 to_title=to_title,
@@ -140,71 +163,78 @@ class NotesGraphRepository(INotesGraphRepository):
         query: str | None = None,
         depth: int = 1,
     ) -> GraphData:
-        nodes_query = (
-            "CALL { "
-            "MATCH (k:Keyword {user_id: $user_id}) "
-            "RETURN DISTINCT "
-            "'keyword' AS kind, "
-            "'keyword:' + k.name AS id, "
-            "k.name AS title, "
-            "EXISTS { "
-            "MATCH (n:Note {user_id: $user_id, title: k.name}) "
-            "WHERE n.represents_keyword_id IS NOT NULL "
-            "} AS has_keyword_note, "
-            "NULL AS represents_keyword, "
-            "k.name AS keyword_name, "
-            "NULL AS note_id "
-            "UNION "
-            "MATCH (n:Note {user_id: $user_id}) "
-            "WHERE n.title IS NOT NULL "
-            "RETURN DISTINCT "
-            "'note' AS kind, "
-            "'note:' + toString(n.id) AS id, "
-            "n.title AS title, "
-            "NULL AS has_keyword_note, "
-            "(n.represents_keyword_id IS NOT NULL) AS represents_keyword, "
-            "NULL AS keyword_name, "
-            "toString(n.id) AS note_id "
-            "} "
-            "RETURN kind, id, title, has_keyword_note, represents_keyword, "
-            "keyword_name, note_id"
-        )
+        nodes_query = """
+            CALL {
+                MATCH (k:Keyword {user_id: $user_id})
+                RETURN DISTINCT
+                    'keyword' AS kind,
+                    'keyword:' + k.name AS id,
+                    k.name AS title,
+                    EXISTS {
+                        MATCH (n:Note {user_id: $user_id, title: k.name})
+                        WHERE n.represents_keyword_id IS NOT NULL
+                    } AS has_keyword_note,
+                    NULL AS represents_keyword,
+                    k.name AS keyword_name,
+                    NULL AS note_id
+                UNION
+                MATCH (n:Note {user_id: $user_id})
+                WHERE n.title IS NOT NULL
+                RETURN DISTINCT
+                    'note' AS kind,
+                    'note:' + toString(n.id) AS id,
+                    n.title AS title,
+                    NULL AS has_keyword_note,
+                    (n.represents_keyword_id IS NOT NULL) AS represents_keyword,
+                    NULL AS keyword_name,
+                    toString(n.id) AS note_id
+            }
+            RETURN
+                kind,
+                id,
+                title,
+                has_keyword_note,
+                represents_keyword,
+                keyword_name,
+                note_id
+        """
 
         nodes_filtered_query = (
             "WITH $user_id AS user_id, $search_query AS search_query "
             "CALL { "
-            "WITH user_id, search_query "
-            "MATCH (k:Keyword {user_id: user_id}) "
-            "WHERE toLower(k.name) CONTAINS toLower(search_query) "
-            "RETURN k AS seed "
-            "UNION "
-            "WITH user_id, search_query "
-            "MATCH (n:Note {user_id: user_id}) "
-            "WHERE n.title IS NOT NULL "
-            "AND toLower(n.title) CONTAINS toLower(search_query) "
-            "RETURN n AS seed "
+            "    WITH user_id, search_query "
+            "    MATCH (k:Keyword {user_id: user_id}) "
+            "    WHERE toLower(k.name) CONTAINS toLower(search_query) "
+            "    RETURN k AS seed "
+            "    UNION "
+            "    WITH user_id, search_query "
+            "    MATCH (n:Note {user_id: user_id}) "
+            "    WHERE n.title IS NOT NULL "
+            "    AND toLower(n.title) CONTAINS toLower(search_query) "
+            "    RETURN n AS seed "
             "} "
             "WITH DISTINCT seed, user_id "
             f"MATCH p=(seed)-[:HAS_KEYWORD|LINKS_TO*0..{depth}]-(node) "
             "WHERE all(n IN nodes(p) WHERE "
-            "(n:Keyword AND n.user_id = user_id) "
-            "OR (n:Note AND n.user_id = user_id AND n.title IS NOT NULL)) "
+            "    (n:Keyword AND n.user_id = user_id) "
+            "    OR (n:Note AND n.user_id = user_id AND n.title IS NOT NULL) "
+            ") "
             "WITH DISTINCT node, user_id "
             "RETURN "
-            "CASE WHEN node:Keyword THEN 'keyword' ELSE 'note' END AS kind, "
-            "CASE WHEN node:Keyword "
-            "THEN 'keyword:' + node.name "
-            "ELSE 'note:' + toString(node.id) END AS id, "
-            "CASE WHEN node:Keyword THEN node.name ELSE node.title END AS title, "
-            "CASE WHEN node:Keyword THEN EXISTS { "
-            "MATCH (n:Note {user_id: user_id, title: node.name}) "
-            "WHERE n.represents_keyword_id IS NOT NULL "
-            "} ELSE NULL END AS has_keyword_note, "
-            "CASE WHEN node:Note "
-            "THEN (node.represents_keyword_id IS NOT NULL) "
-            "ELSE NULL END AS represents_keyword, "
-            "CASE WHEN node:Keyword THEN node.name ELSE NULL END AS keyword_name, "
-            "CASE WHEN node:Note THEN toString(node.id) ELSE NULL END AS note_id"
+            "    CASE WHEN node:Keyword THEN 'keyword' ELSE 'note' END AS kind, "
+            "    CASE WHEN node:Keyword "
+            "        THEN 'keyword:' + node.name "
+            "        ELSE 'note:' + toString(node.id) END AS id, "
+            "    CASE WHEN node:Keyword THEN node.name ELSE node.title END AS title, "
+            "    CASE WHEN node:Keyword THEN EXISTS { "
+            "        MATCH (n:Note {user_id: user_id, title: node.name}) "
+            "        WHERE n.represents_keyword_id IS NOT NULL "
+            "    } ELSE NULL END AS has_keyword_note, "
+            "    CASE WHEN node:Note "
+            "        THEN (node.represents_keyword_id IS NOT NULL) "
+            "        ELSE NULL END AS represents_keyword, "
+            "    CASE WHEN node:Keyword THEN node.name ELSE NULL END AS keyword_name, "
+            "    CASE WHEN node:Note THEN toString(node.id) ELSE NULL END AS note_id"
         )
 
         async with self._driver.session(database=self._database) as session:
@@ -244,29 +274,31 @@ class NotesGraphRepository(INotesGraphRepository):
             if not nodes:
                 return GraphData(nodes=[], connections=[])
 
-            connections_query = (
-                "MATCH (n:Note)-[:HAS_KEYWORD]->(k:Keyword) "
-                "WHERE n.user_id = $user_id "
-                "AND n.id IN $note_ids "
-                "AND k.user_id = $user_id "
-                "AND k.name IN $keyword_names "
-                "RETURN DISTINCT "
-                "toString(n.id) AS from_note_id, "
-                "k.name AS to_keyword, "
-                "'has_keyword' AS kind, "
-                "NULL AS to_note_id "
-                "UNION "
-                "MATCH (a:Note)-[:LINKS_TO]->(b:Note) "
-                "WHERE a.user_id = $user_id "
-                "AND b.user_id = $user_id "
-                "AND a.id IN $note_ids "
-                "AND b.id IN $note_ids "
-                "RETURN DISTINCT "
-                "toString(a.id) AS from_note_id, "
-                "NULL AS to_keyword, "
-                "'links_to' AS kind, "
-                "toString(b.id) AS to_note_id"
-            )
+            connections_query = """
+                MATCH (n:Note)-[:HAS_KEYWORD]->(k:Keyword)
+                WHERE
+                    n.user_id = $user_id
+                    AND n.id IN $note_ids
+                    AND k.user_id = $user_id
+                    AND k.name IN $keyword_names
+                RETURN DISTINCT
+                    toString(n.id) AS from_note_id,
+                    k.name AS to_keyword,
+                    'has_keyword' AS kind,
+                    NULL AS to_note_id
+                UNION
+                MATCH (a:Note)-[:LINKS_TO]->(b:Note)
+                WHERE
+                    a.user_id = $user_id
+                    AND b.user_id = $user_id
+                    AND a.id IN $note_ids
+                    AND b.id IN $note_ids
+                RETURN DISTINCT
+                    toString(a.id) AS from_note_id,
+                    NULL AS to_keyword,
+                    'links_to' AS kind,
+                    toString(b.id) AS to_note_id
+            """
 
             result = await session.run(
                 connections_query,
