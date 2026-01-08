@@ -34,6 +34,7 @@ class KeywordDB(Base, CreatedUpdatedMixin):
         secondary="note_keywords",
         back_populates="keywords",
         lazy="selectin",
+        overlaps="note_keywords",
     )
 
 
@@ -51,5 +52,5 @@ class NoteKeywordDB(Base):
         primary_key=True,
     )
 
-    note = relationship("NoteDB", back_populates="note_keywords", lazy="selectin")
-    keyword = relationship("KeywordDB", back_populates="note_keywords", lazy="selectin")
+    note = relationship("NoteDB", back_populates="note_keywords", lazy="selectin", overlaps="notes")
+    keyword = relationship("KeywordDB", back_populates="note_keywords", lazy="selectin", overlaps="notes")

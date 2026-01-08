@@ -34,10 +34,12 @@ class NoteDB(Base, CreatedUpdatedMixin):
         "NoteKeywordDB",
         back_populates="note",
         cascade="all, delete-orphan",
+        overlaps="notes",
     )
     keywords = relationship(
         "KeywordDB",
         secondary="note_keywords",
         back_populates="notes",
         lazy="selectin",
+        overlaps="note_keywords,note,keyword",
     )
