@@ -14,3 +14,4 @@ class UpdateNote:
     note_id: UUID
     title: str | None
     text: str | None
+    patch: str | None = None

@@ -129,8 +129,14 @@ class NotesGraphRepository(INotesGraphRepository):
         async with self._driver.session(database=self._database) as session:
             result = await session.run(
                 """
-                MATCH (n:Note {user_id: $user_id, title: $title})
-                RETURN count(n) AS c
+                RETURN CASE WHEN
+                    EXISTS {
+                        MATCH (n:Note {user_id: $user_id, title: $title})
+                    }
+                    OR EXISTS {
+                        MATCH (k:Keyword {user_id: $user_id, name: $title})
+                    }
+                THEN 1 ELSE 0 END AS c
                 """,
                 user_id=str(user_id),
                 title=title,
@@ -145,10 +151,16 @@ class NotesGraphRepository(INotesGraphRepository):
             result = await session.run(
                 """
                 MATCH (from:Note {user_id: $user_id, title: $from_title})
-                MATCH (to:Note {user_id: $user_id, title: $to_title})
-                OPTIONAL MATCH (from)-[direct:LINKS_TO]->(to)
-                OPTIONAL MATCH (from)-[:HAS_KEYWORD]->(k:Keyword)<-[:HAS_KEYWORD]-(to)
-                RETURN count(DISTINCT direct) + count(DISTINCT k) AS c
+                OPTIONAL MATCH (from)-[:HAS_KEYWORD]->(direct:Keyword {
+                    user_id: $user_id,
+                    name: $to_title
+                })
+                WITH from, count(DISTINCT direct) AS direct_count
+                OPTIONAL MATCH (from)-[:HAS_KEYWORD]->(shared:Keyword)<-[:HAS_KEYWORD]-(
+                    to:Note {user_id: $user_id, title: $to_title}
+                )
+                WITH direct_count, count(DISTINCT shared) AS shared_count
+                RETURN direct_count + shared_count AS c
                 """,
                 user_id=str(user_id),
                 from_title=from_title,

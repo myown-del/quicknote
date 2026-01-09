@@ -82,8 +82,8 @@ def test_find_note_default_exact_match(client, mock_get_note_interactor):
     assert response.status_code == 200
     # Check that exact_match defaults to False
     args, kwargs = mock_get_note_interactor.get_note_by_title.call_args
-    assert args[1] == title
-    assert args[2] is False
+    assert kwargs['title'] == title
+    assert kwargs['exact_match'] is False
 
 def test_find_note_exact_match_true(client, mock_get_note_interactor):
     note_id = uuid4()
@@ -105,8 +105,8 @@ def test_find_note_exact_match_true(client, mock_get_note_interactor):
     assert response.status_code == 200
     # Check that exact_match is True
     args, kwargs = mock_get_note_interactor.get_note_by_title.call_args
-    assert args[1] == title
-    assert args[2] is True
+    assert kwargs['title'] == title
+    assert kwargs['exact_match'] is True
 
 def test_find_note_exact_match_explicit_false(client, mock_get_note_interactor):
     note_id = uuid4()
@@ -128,5 +128,5 @@ def test_find_note_exact_match_explicit_false(client, mock_get_note_interactor):
     assert response.status_code == 200
     # Check that exact_match is False
     args, kwargs = mock_get_note_interactor.get_note_by_title.call_args
-    assert args[1] == title
-    assert args[2] is False
+    assert kwargs['title'] == title
+    assert kwargs['exact_match'] is False

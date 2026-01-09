@@ -12,7 +12,8 @@ from brain.application.services.keyword_notes import KeywordNoteService
 from brain.application.services.note_titles import NoteTitleService
 from brain.application.services.note_keyword_sync import NoteKeywordSyncService
 from brain.domain.entities.note import Note
-from brain.domain.services.wikilinks import extract_link_targets
+from brain.domain.services.wikilinks import extract_link_targets, extract_link_intervals
+from brain.domain.services.diffs import apply_patch, get_diffs, check_if_ranges_touched
 
 from brain.domain.services.keywords import collect_cleanup_keyword_names
 
@@ -47,6 +48,7 @@ class UpdateNoteInteractor:
             represents_keyword_id=note.represents_keyword_id,
             updated_at=note.updated_at,
             created_at=note.created_at,
+            link_intervals=note.link_intervals,
         )
 
         title = await self._note_title_service.ensure_update_title(
@@ -55,7 +57,6 @@ class UpdateNoteInteractor:
             exclude_note_id=note.id,
         )
         note.title = title
-        note.text = note_data.text
 
         note.represents_keyword_id = await self._keyword_note_service.ensure_keyword_for_title(
             user_id=note.user_id,
@@ -64,9 +65,49 @@ class UpdateNoteInteractor:
 
         note.updated_at = datetime.utcnow()
 
+        # Apply patch if present
+        if note_data.patch:
+            try:
+                # NOTE: Logic - if patch provided, derive text.
+                # For safety, let's say we trust patch if provided.
+                current_text = apply_patch(note.text or "", note_data.patch)
+                note.text = current_text
+            except Exception:
+                # Fallback or error? For now let's error if patch fails.
+                raise ValueError("Failed to apply patch")
+        elif note_data.text is not None:
+             note.text = note_data.text
+
+        # Differential Update Optimization
+        # Check if we can skip Neo4j sync
+        should_sync_graph = True
+        
+        # If we have previous link intervals, check if they are safe
+        # We need diffs between OLD text and NEW text.
+        
+        # If we just derived text from patch, we implicitly have diffs (from patch).
+        # But get_diffs uses dmp which is what we want.
+        
+        if note.link_intervals and note_data.patch:
+             diffs = get_diffs(previous_state.text or "", note.text or "")
+             touched_old = check_if_ranges_touched(
+                 len(previous_state.text or ""), 
+                 diffs, 
+                 previous_state.link_intervals
+             )
+             has_new_brackets = any(("[" in text or "]" in text) for op, text in diffs if op == 1)
+             
+             if not touched_old and not has_new_brackets:
+                 should_sync_graph = False
+
+        note.link_intervals = extract_link_intervals(note.text or "")
+
         await self._notes_repo.update(note)
         await self._notes_graph_repo.upsert_note(note)
-        await self._keyword_sync_service.sync(note, previous_state=previous_state)
+        
+        if should_sync_graph:
+            await self._keyword_sync_service.sync(note, previous_state=previous_state)
+
 
         previous_targets = extract_link_targets(previous_state.text or "")
         current_targets = extract_link_targets(note.text or "")

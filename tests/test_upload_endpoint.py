@@ -37,6 +37,10 @@ def client():
         @provide
         def get_s3_client(self) -> S3Client:
             return mock_s3_client
+            
+        @provide
+        def get_s3_config(self) -> S3Config:
+            return mock_config.s3
 
     # App
     app = create_bare_app(mock_config.api)

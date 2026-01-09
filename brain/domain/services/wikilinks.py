@@ -1,5 +1,8 @@
 import re
 
+from brain.domain.value_objects import LinkInterval
+
+
 # Example 1: [[Child]] -> ["Child"]
 # Example 2: [[Child|alias]] -> ["Child"]
 WIKILINK_PATTERN = re.compile(r"\[\[([^\[\]\n]+)\]\]")
@@ -24,3 +27,19 @@ def extract_link_targets(text: str) -> list[str]:
 
 def extract_wikilinks(text: str) -> list[str]:
     return extract_link_targets(text)
+
+
+
+def extract_link_intervals(text: str) -> list[LinkInterval]:
+    """
+    Returns a list of LinkInterval(start, end) for every wikilink found.
+    The interval is [start, end), consistent with Python slicing.
+    """
+    if not text:
+        return []
+
+    intervals = []
+    for match in WIKILINK_PATTERN.finditer(text):
+        start, end = match.span()
+        intervals.append(LinkInterval(start=start, end=end))
+    return intervals

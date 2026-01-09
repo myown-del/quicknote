@@ -14,11 +14,11 @@ from brain.config.parser import load_config
 from brain.config.provider import ConfigProvider
 from brain.domain.entities.user import User
 from brain.infrastructure.db.provider import DatabaseProvider
+from brain.infrastructure.db.provider import DatabaseProvider
 from brain.infrastructure.db.repositories.hub import RepositoryHub
-from brain.infrastructure.graph.provider import Neo4jProvider
 from brain.infrastructure.jwt.provider import JwtProvider
 from tests.fixtures.db_provider import TestDbProvider
-from tests.fixtures.graph_provider import TestNeo4jConfigProvider
+from tests.fixtures.graph_provider import TestGraphProvider, TestNeo4jConfigProvider
 
 
 @pytest_asyncio.fixture(scope="session")
@@ -44,7 +44,7 @@ async def dishka():
         TestDbProvider(),
         DatabaseProvider(),
         TestNeo4jConfigProvider(),
-        Neo4jProvider(),
+        TestGraphProvider(),
         InteractorProvider(),
         JwtProvider(),
         context={Config: config}

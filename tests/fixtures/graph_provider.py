@@ -1,20 +1,35 @@
 import os
 
+from testcontainers.neo4j import Neo4jContainer
+
 from dishka import Provider, Scope, provide
+
+from typing import AsyncIterable
+
+from neo4j import AsyncDriver
 
 from brain.application.abstractions.config.models import INeo4jConfig
 from brain.application.abstractions.repositories.notes_graph import INotesGraphRepository
 from brain.config.models import Config
+from brain.infrastructure.graph.connection import create_driver
+from brain.infrastructure.graph.repositories.notes import NotesGraphRepository
 from tests.mocks.config import Neo4jConfig
-from tests.mocks.notes_graph_repo import DummyNotesGraphRepository
 
 
 class TestGraphProvider(Provider):
     scope = Scope.APP
 
-    @provide(provides=INotesGraphRepository)
-    def get_notes_graph_repo(self) -> DummyNotesGraphRepository:
-        return DummyNotesGraphRepository()
+    @provide(scope=Scope.APP)
+    async def get_driver(self, config: INeo4jConfig) -> AsyncIterable[AsyncDriver]:
+        driver = create_driver(config)
+        yield driver
+        await driver.close()
+
+    @provide(scope=Scope.REQUEST, provides=INotesGraphRepository)
+    def get_notes_graph_repo(
+        self, driver: AsyncDriver, config: INeo4jConfig
+    ) -> NotesGraphRepository:
+        return NotesGraphRepository(driver=driver, database=config.database)
 
 
 class TestNeo4jConfigProvider(Provider):
@@ -22,8 +37,6 @@ class TestNeo4jConfigProvider(Provider):
 
     @provide(provides=INeo4jConfig)
     def get_neo4j_config(self, config: Config) -> Neo4jConfig:
-        from testcontainers.neo4j import Neo4jContainer
-
         neo4j = Neo4jContainer("neo4j:5")
         if os.name == "nt":
             neo4j.get_container_host_ip = lambda: "localhost"

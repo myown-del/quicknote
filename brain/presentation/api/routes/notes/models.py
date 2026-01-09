@@ -20,6 +20,7 @@ class CreateNoteSchema(BaseModel):
 class UpdateNoteSchema(BaseModel):
     title: str | None = None
     text: str | None = None
+    patch: str | None = None
 
 
 class WikilinkSuggestionSchema(BaseModel):

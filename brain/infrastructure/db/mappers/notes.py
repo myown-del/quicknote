@@ -1,5 +1,6 @@
 from brain.domain.entities.note import Note
 from brain.infrastructure.db.models.note import NoteDB
+from brain.domain.value_objects import LinkInterval
 
 
 def map_note_to_dm(note: NoteDB) -> Note:
@@ -10,7 +11,8 @@ def map_note_to_dm(note: NoteDB) -> Note:
         text=note.text,
         represents_keyword_id=note.represents_keyword_id,
         created_at=note.created_at,
-        updated_at=note.updated_at
+        updated_at=note.updated_at,
+        link_intervals=[LinkInterval(interval[0], interval[1]) for interval in note.link_intervals],
     )
 
 
@@ -22,5 +24,6 @@ def map_note_to_db(note: Note) -> NoteDB:
         text=note.text,
         represents_keyword_id=note.represents_keyword_id,
         created_at=note.created_at,
-        updated_at=note.updated_at
+        updated_at=note.updated_at,
+        link_intervals=[[interval.start, interval.end] for interval in note.link_intervals],
     )

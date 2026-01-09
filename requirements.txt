@@ -20,3 +20,4 @@ pytest-asyncio
 python-multipart
 boto3~=1.34.0
 types-boto3[s3]
+diff-match-patch

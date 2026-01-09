@@ -3,6 +3,7 @@ from datetime import datetime
 from uuid import UUID
 
 from brain.domain.entities.common import Entity
+from brain.domain.value_objects import LinkInterval
 
 
 @dataclass
@@ -18,3 +19,4 @@ class Note(Entity):
     represents_keyword_id: UUID
     updated_at: datetime | None = field(default=None, kw_only=True)
     created_at: datetime | None = field(default=None, kw_only=True)
+    link_intervals: list[LinkInterval] = field(default_factory=list, kw_only=True)

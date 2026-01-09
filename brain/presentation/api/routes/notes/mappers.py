@@ -41,6 +41,7 @@ def map_update_schema_to_dto(
         note_id=note_id,
         title=payload.get("title", existing_note.title),
         text=payload.get("text", existing_note.text),
+        patch=payload.get("patch"),
     )
 
 

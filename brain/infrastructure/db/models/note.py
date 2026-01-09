@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from uuid import UUID
 
-from sqlalchemy import Uuid, String, Text, Column, ForeignKey, UniqueConstraint
+from sqlalchemy import Uuid, String, Text, Column, ForeignKey, UniqueConstraint, JSON
 from sqlalchemy.orm import mapped_column, Mapped, relationship
 
 from brain.infrastructure.db.models.base import Base
@@ -28,6 +28,7 @@ class NoteDB(Base, CreatedUpdatedMixin):
         ForeignKey("keywords.id", ondelete="CASCADE", onupdate="CASCADE"),
         nullable=False,
     )
+    link_intervals: Mapped[list[list[int]]] = mapped_column(JSON, default=list, nullable=False)
 
     user = relationship("UserDB", back_populates="notes", lazy="selectin")
     note_keywords = relationship(
