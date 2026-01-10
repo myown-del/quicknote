@@ -20,21 +20,6 @@ def get_diffs(text1: str, text2: str) -> list[tuple[int, int]]:
     """
     Returns a list of (start, length) tuples representing changed regions in text2
     relative to text1, but properly mapped to offsets.
-    Actually, for checking if links are affected, we need:
-    1. Where did changes happen in the OLD text? (to check if old links were touched)
-    2. Where did changes happen in the NEW text? (to check if new links were created)
-
-    Let's simplify:
-    We need to know which characters in the new text are "preserved" from the old text
-    and which are "newly inserted" or "modified".
-    And also which parts of the old text were "deleted" or "modified".
-
-    However, the optimization logic is:
-    - Did we touch any interval [start, end] where a link existed in old text?
-    - Did we insert any NEW link syntax?
-
-    For the first, we need to map old intervals to new intervals or check overlaps with diffs.
-    _dmp.diff_main(text1, text2) returns a list of (operation, length).
     """
     dmp = dmp_module.diff_match_patch()
     diffs = dmp.diff_main(text1, text2)

@@ -219,3 +219,36 @@ async def test_note_update_not_found(
             title="Ghost",
             text="Boo",
         ))
+
+
+@pytest.mark.asyncio
+async def test_note_update_removes_wikilink_connection(
+    dishka_request: AsyncContainer,
+    user: User,
+    repo_hub: RepositoryHub,
+):
+    create_interactor = await dishka_request.get(CreateNoteInteractor)
+    update_interactor = await dishka_request.get(UpdateNoteInteractor)
+    graph_repo = await dishka_request.get(INotesGraphRepository)
+
+    # 1. Create a note with a wikilink
+    note_id = await create_interactor.create_note(CreateNote(
+        by_user_telegram_id=user.telegram_id,
+        title="Source",
+        text="This refers to [[Target]]",
+    ))
+
+    # Verify link exists initially
+    initial_count = await graph_repo.count_links_between_notes(user.id, "Source", "Target")
+    assert initial_count == 1
+
+    # 2. Update the note to remove the wikilink
+    await update_interactor.update_note(UpdateNote(
+        note_id=note_id,
+        title="Source",
+        text="No links here anymore",
+    ))
+
+    # 3. Verify link is gone
+    final_count = await graph_repo.count_links_between_notes(user.id, "Source", "Target")
+    assert final_count == 0

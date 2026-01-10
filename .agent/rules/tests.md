@@ -1,6 +1,7 @@
 ---
-trigger: model_decision
+trigger: glob
 description: For writing or updating tests
+globs: tests/*
 ---
 
 # Running tests
