@@ -164,7 +164,7 @@ async def update_note(
             detail="Forbidden",
         )
 
-    data = map_update_schema_to_dto(note_id, note, existing_note)
+    data = map_update_schema_to_dto(note_id, note)
 
     try:
         updated_note = await update_interactor.update_note(data)

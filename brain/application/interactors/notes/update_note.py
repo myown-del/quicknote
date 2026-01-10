@@ -14,6 +14,7 @@ from brain.application.services.note_keyword_sync import NoteKeywordSyncService
 from brain.domain.entities.note import Note
 from brain.domain.services.wikilinks import extract_link_targets, extract_link_intervals
 from brain.domain.services.diffs import apply_patch, get_diffs, check_if_ranges_touched
+from brain.application.types import Unset
 
 from brain.domain.services.keywords import collect_cleanup_keyword_names
 
@@ -51,22 +52,23 @@ class UpdateNoteInteractor:
             link_intervals=note.link_intervals,
         )
 
-        title = await self._note_title_service.ensure_update_title(
-            user_id=note.user_id,
-            title=note_data.title,
-            exclude_note_id=note.id,
-        )
-        note.title = title
+        if note_data.title is not Unset:
+            title = await self._note_title_service.ensure_update_title(
+                user_id=note.user_id,
+                title=note_data.title,
+                exclude_note_id=note.id,
+            )
+            note.title = title
 
-        note.represents_keyword_id = await self._keyword_note_service.ensure_keyword_for_title(
-            user_id=note.user_id,
-            title=note.title,
-        )
+            note.represents_keyword_id = await self._keyword_note_service.ensure_keyword_for_title(
+                user_id=note.user_id,
+                title=note.title,
+            )
 
         note.updated_at = datetime.utcnow()
 
         # Apply patch if present
-        if note_data.patch:
+        if note_data.patch and note_data.patch is not Unset:
             try:
                 # NOTE: Logic - if patch provided, derive text.
                 # For safety, let's say we trust patch if provided.
@@ -75,7 +77,7 @@ class UpdateNoteInteractor:
             except Exception:
                 # Fallback or error? For now let's error if patch fails.
                 raise ValueError("Failed to apply patch")
-        elif note_data.text is not None:
+        elif note_data.text is not Unset:
              note.text = note_data.text
 
         # Differential Update Optimization
@@ -88,7 +90,7 @@ class UpdateNoteInteractor:
         # If we just derived text from patch, we implicitly have diffs (from patch).
         # But get_diffs uses dmp which is what we want.
         
-        if note.link_intervals and note_data.patch:
+        if note.link_intervals and note_data.patch and note_data.patch is not Unset:
              diffs = get_diffs(previous_state.text or "", note.text or "")
              touched_old = check_if_ranges_touched(
                  len(previous_state.text or ""), 

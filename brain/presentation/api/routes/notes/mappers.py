@@ -3,7 +3,6 @@ from dataclasses import asdict
 from uuid import UUID
 
 from brain.application.interactors.notes.dto import CreateNote, UpdateNote
-from brain.domain.entities.note import Note
 from brain.domain.entities.user import User
 from brain.presentation.api.routes.notes.models import (
     CreateNoteSchema,
@@ -12,6 +11,7 @@ from brain.presentation.api.routes.notes.models import (
     WikilinkSuggestionSchema,
 )
 from brain.application.abstractions.repositories.models import WikilinkSuggestion
+from brain.application.types import Unset
 
 
 def map_note_to_read_schema(note: Note) -> ReadNoteSchema:
@@ -31,17 +31,18 @@ def map_create_schema_to_dto(
     )
 
 
+
+
 def map_update_schema_to_dto(
     note_id: UUID,
     schema: UpdateNoteSchema,
-    existing_note: Note,
 ) -> UpdateNote:
     payload = schema.model_dump(exclude_unset=True)
     return UpdateNote(
         note_id=note_id,
-        title=payload.get("title", existing_note.title),
-        text=payload.get("text", existing_note.text),
-        patch=payload.get("patch"),
+        title=payload.get("title", Unset),
+        text=payload.get("text", Unset),
+        patch=payload.get("patch", Unset),
     )
 
 

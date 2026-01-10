@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from uuid import UUID
+from brain.application.types import Unset, UnsetType
 
 
 @dataclass
@@ -12,6 +13,6 @@ class CreateNote:
 @dataclass
 class UpdateNote:
     note_id: UUID
-    title: str | None
-    text: str | None
-    patch: str | None = None
+    title: str | None | UnsetType = Unset
+    text: str | None | UnsetType = Unset
+    patch: str | None | UnsetType = Unset
