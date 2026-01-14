@@ -3,6 +3,7 @@ from dataclasses import asdict
 from uuid import UUID
 
 from brain.application.interactors.notes.dto import CreateNote, UpdateNote
+from brain.domain.entities.note import Note
 from brain.domain.entities.user import User
 from brain.presentation.api.routes.notes.models import (
     CreateNoteSchema,
@@ -29,8 +30,6 @@ def map_create_schema_to_dto(
         title=schema.title,
         text=schema.text,
     )
-
-
 
 
 def map_update_schema_to_dto(
