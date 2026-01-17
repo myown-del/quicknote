@@ -6,6 +6,8 @@
 1. Don't write SQL inside tests. All queries should be written inside project repositories, and methods are called in tests.
 2. When trying to send request to API use `client.request()` method instead of custom methods like `client.get()`, `client.delete()`, etc...
 3. Do not use async mocks for 'getting data' from db. Use real data inside db. Create data in db with repositories (`infrastructure/db/`)
+4. All test arguments should be always typed using python typing.
+5. For all calls to function or methods we use keyword-arguments if there are 2 or more arguments.
 
 # Commenting rules
 - For each test add comments for parts of test:

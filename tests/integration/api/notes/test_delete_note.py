@@ -1,82 +1,88 @@
-from datetime import datetime
 from uuid import uuid4
-from unittest.mock import AsyncMock
 
+import pytest
 from starlette import status
 
-from brain.application.interactors.notes.exceptions import NoteNotFoundException
-from brain.domain.entities.note import Note
+from brain.domain.entities.user import User
+from brain.infrastructure.db.repositories.hub import RepositoryHub
+from tests.integration.api.notes.helpers import create_keyword_note
 
 
-def make_note(user_id, title="Note title", text="Note text"):
-    now = datetime(2024, 1, 2, 3, 4, 5)
-    return Note(
-        id=uuid4(),
-        user_id=user_id,
-        title=title,
-        text=text,
-        represents_keyword_id=uuid4(),
-        created_at=now,
-        updated_at=now,
+@pytest.mark.asyncio
+async def test_delete_note_success(
+    notes_app,
+    api_client,
+    repo_hub: RepositoryHub,
+    user,
+):
+    # setup: create a note owned by the user
+    note = await create_keyword_note(
+        repo_hub=repo_hub,
+        user=user,
+        title="Delete Me",
+        text="Text",
     )
 
-
-def test_delete_note_success(notes_api_client):
-    # setup: mock get and delete interactors
-    client, mocks, user = notes_api_client
-    note = make_note(user.id)
-    note_id = note.id
-    mocks.get_note.get_note_by_id = AsyncMock(return_value=note)
-    mocks.delete_note.delete_note = AsyncMock(return_value=None)
-
     # action: delete existing note
-    response = client.request("DELETE", f"/api/notes/{note_id}")
+    async with api_client(notes_app) as client:
+        response = await client.request(
+            method="DELETE",
+            url=f"/api/notes/{note.id}",
+        )
 
-    # check: successful delete and interactor call
+    # check: note is removed from database
     assert response.status_code == status.HTTP_204_NO_CONTENT
-    mocks.delete_note.delete_note.assert_awaited_once_with(note_id)
+    stored = await repo_hub.notes.get_by_id(note.id)
+    assert stored is None
 
 
-def test_delete_note_not_found(notes_api_client):
-    # setup: mock missing note
-    client, mocks, _ = notes_api_client
+@pytest.mark.asyncio
+async def test_delete_note_not_found(notes_app, api_client):
+    # setup: use a random note id
     note_id = uuid4()
-    mocks.get_note.get_note_by_id = AsyncMock(return_value=None)
 
     # action: delete a missing note
-    response = client.request("DELETE", f"/api/notes/{note_id}")
+    async with api_client(notes_app) as client:
+        response = await client.request(
+            method="DELETE",
+            url=f"/api/notes/{note_id}",
+        )
 
     # check: not found response
     assert response.status_code == status.HTTP_404_NOT_FOUND
     assert response.json()["detail"] == "Note not found"
 
 
-def test_delete_note_forbidden(notes_api_client):
-    # setup: mock note belonging to another user
-    client, mocks, user = notes_api_client
-    note = make_note(uuid4())
-    note_id = note.id
-    mocks.get_note.get_note_by_id = AsyncMock(return_value=note)
+@pytest.mark.asyncio
+async def test_delete_note_forbidden(
+    notes_app,
+    api_client,
+    repo_hub: RepositoryHub,
+    user,
+):
+    # setup: create a note for another user
+    other_user = User(
+        id=uuid4(),
+        telegram_id=987,
+        username="other",
+        first_name="Other",
+        last_name="User",
+    )
+    await repo_hub.users.create(entity=other_user)
+    note = await create_keyword_note(
+        repo_hub=repo_hub,
+        user=other_user,
+        title="Other Note",
+        text="Text",
+    )
 
     # action: delete note not owned by user
-    response = client.request("DELETE", f"/api/notes/{note_id}")
+    async with api_client(notes_app) as client:
+        response = await client.request(
+            method="DELETE",
+            url=f"/api/notes/{note.id}",
+        )
 
     # check: forbidden response
     assert response.status_code == status.HTTP_403_FORBIDDEN
     assert response.json()["detail"] == "Forbidden"
-
-
-def test_delete_note_interactor_not_found(notes_api_client):
-    # setup: mock get note and delete interactor error
-    client, mocks, user = notes_api_client
-    note = make_note(user.id)
-    note_id = note.id
-    mocks.get_note.get_note_by_id = AsyncMock(return_value=note)
-    mocks.delete_note.delete_note = AsyncMock(side_effect=NoteNotFoundException())
-
-    # action: delete note that interactor cannot find
-    response = client.request("DELETE", f"/api/notes/{note_id}")
-
-    # check: not found response
-    assert response.status_code == status.HTTP_404_NOT_FOUND
-    assert response.json()["detail"] == "Note not found"

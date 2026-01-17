@@ -1,0 +1,32 @@
+from datetime import datetime
+from uuid import uuid4
+
+from brain.domain.entities.note import Note
+from brain.domain.entities.user import User
+from brain.infrastructure.db.repositories.hub import RepositoryHub
+
+
+async def create_keyword_note(
+    repo_hub: RepositoryHub,
+    user: User,
+    title: str,
+    text: str | None = None,
+    created_at: datetime | None = None,
+    updated_at: datetime | None = None,
+) -> Note:
+    await repo_hub.keywords.ensure_keywords(user_id=user.id, names=[title])
+    keyword = await repo_hub.keywords.get_by_user_and_name(
+        user_id=user.id,
+        name=title,
+    )
+    note = Note(
+        id=uuid4(),
+        user_id=user.id,
+        title=title,
+        text=text,
+        represents_keyword_id=keyword.id,
+        created_at=created_at,
+        updated_at=updated_at,
+    )
+    await repo_hub.notes.create(note)
+    return note

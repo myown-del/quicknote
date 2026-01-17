@@ -1,141 +1,109 @@
-from unittest.mock import MagicMock, AsyncMock
 import pytest
-from fastapi.testclient import TestClient
-from dishka import make_async_container, Provider, Scope, provide
-from dishka.integrations.fastapi import setup_dishka
-from uuid import uuid4
-from datetime import datetime
+from starlette import status
 
-from brain.presentation.api.factory import create_bare_app
-from brain.config.models import Config, APIConfig, S3Config
-from brain.application.interactors.notes.search_notes_by_title import SearchNotesByTitleInteractor
-from brain.domain.entities.note import Note
-from brain.domain.entities.user import User
-from brain.presentation.api.dependencies.auth import get_user_from_request
+from brain.infrastructure.db.repositories.hub import RepositoryHub
+from tests.integration.api.notes.helpers import create_keyword_note
 
-@pytest.fixture
-def mock_search_notes_interactor():
-    return MagicMock(spec=SearchNotesByTitleInteractor)
 
-@pytest.fixture
-def client(mock_search_notes_interactor, event_loop):
-    # Mock Config
-    mock_config = MagicMock(spec=Config)
-    mock_config.api = APIConfig(
-        internal_host="0.0.0.0",
-        external_host="localhost",
-        port=8080
-    )
-    # Mock S3 Config
-    mock_config.s3 = S3Config(
-        external_host="http://localhost:9000",
-        endpoint_url="http://test",
-        access_key_id="test",
-        secret_access_key="test",
-        bucket_name="test-bucket"
-    )
-
-    # Provider
-    class MockProvider(Provider):
-        scope = Scope.APP
-
-        @provide
-        def get_interactor(self) -> SearchNotesByTitleInteractor:
-            return mock_search_notes_interactor
-
-    # App
-    app = create_bare_app(mock_config.api)
-    
-    # Override auth dependency
-    user = User(
-        id=uuid4(),
-        telegram_id=12345,
-        created_at=datetime.utcnow(),
-        first_name="Test User"
-    )
-    app.dependency_overrides[get_user_from_request] = lambda: user
-
-    # Container
-    container = make_async_container(MockProvider())
-    setup_dishka(container, app)
-
-    with TestClient(app) as client:
-        yield client
-
-    event_loop.run_until_complete(container.close())
-
-def test_search_notes_default_exact_match(client, mock_search_notes_interactor):
-    note_id = uuid4()
-    title = "Test Note"
-    note = Note(
-        id=note_id,
-        user_id=uuid4(),
-        title=title,
+@pytest.mark.asyncio
+async def test_search_notes_default_exact_match(
+    notes_app,
+    api_client,
+    repo_hub: RepositoryHub,
+    user,
+):
+    # setup: create notes with similar titles
+    await create_keyword_note(
+        repo_hub=repo_hub,
+        user=user,
+        title="Test Note",
         text="Content",
-        created_at=datetime.utcnow(),
-        updated_at=datetime.utcnow(),
-        represents_keyword_id=None
     )
-    
-    mock_search_notes_interactor.search = AsyncMock(return_value=[note])
-
-    response = client.get(f"/api/notes/search/by-title?query={title}")
-
-    assert response.status_code == 200
-    payload = response.json()
-    assert isinstance(payload, list)
-    assert len(payload) == 1
-    assert payload[0]["title"] == title
-    args, kwargs = mock_search_notes_interactor.search.call_args
-    assert kwargs['query'] == title
-    assert kwargs['exact_match'] is False
-
-def test_search_notes_exact_match_true(client, mock_search_notes_interactor):
-    note_id = uuid4()
-    title = "Test Note"
-    note = Note(
-        id=note_id,
-        user_id=uuid4(),
-        title=title,
+    await create_keyword_note(
+        repo_hub=repo_hub,
+        user=user,
+        title="Test Note Extended",
         text="Content",
-        created_at=datetime.utcnow(),
-        updated_at=datetime.utcnow(),
-        represents_keyword_id=None
     )
-    
-    mock_search_notes_interactor.search = AsyncMock(return_value=[note])
 
-    response = client.get(f"/api/notes/search/by-title?query={title}&exact_match=true")
+    # action: request search without exact_match
+    async with api_client(notes_app) as client:
+        response = await client.request(
+            method="GET",
+            url="/api/notes/search/by-title?query=Test Note",
+        )
 
-    assert response.status_code == 200
+    # check: both notes are returned
+    assert response.status_code == status.HTTP_200_OK
     payload = response.json()
-    assert isinstance(payload, list)
-    assert payload[0]["title"] == title
-    args, kwargs = mock_search_notes_interactor.search.call_args
-    assert kwargs['query'] == title
-    assert kwargs['exact_match'] is True
+    titles = {item["title"] for item in payload}
+    assert titles == {"Test Note", "Test Note Extended"}
 
-def test_search_notes_exact_match_explicit_false(client, mock_search_notes_interactor):
-    note_id = uuid4()
-    title = "Test Note"
-    note = Note(
-        id=note_id,
-        user_id=uuid4(),
-        title=title,
+
+@pytest.mark.asyncio
+async def test_search_notes_exact_match_true(
+    notes_app,
+    api_client,
+    repo_hub: RepositoryHub,
+    user,
+):
+    # setup: create notes with similar titles
+    await create_keyword_note(
+        repo_hub=repo_hub,
+        user=user,
+        title="Test Note",
         text="Content",
-        created_at=datetime.utcnow(),
-        updated_at=datetime.utcnow(),
-        represents_keyword_id=None
     )
-    
-    mock_search_notes_interactor.search = AsyncMock(return_value=[note])
+    await create_keyword_note(
+        repo_hub=repo_hub,
+        user=user,
+        title="Test Note Extended",
+        text="Content",
+    )
 
-    response = client.get(f"/api/notes/search/by-title?query={title}&exact_match=false")
+    # action: request search with exact_match=true
+    async with api_client(notes_app) as client:
+        response = await client.request(
+            method="GET",
+            url="/api/notes/search/by-title?query=Test Note&exact_match=true",
+        )
 
-    assert response.status_code == 200
+    # check: only exact title match returned
+    assert response.status_code == status.HTTP_200_OK
     payload = response.json()
-    assert isinstance(payload, list)
-    assert payload[0]["title"] == title
-    args, kwargs = mock_search_notes_interactor.search.call_args
-    assert kwargs['query'] == title
-    assert kwargs['exact_match'] is False
+    assert [item["title"] for item in payload] == ["Test Note"]
+
+
+@pytest.mark.asyncio
+async def test_search_notes_exact_match_explicit_false(
+    notes_app,
+    api_client,
+    repo_hub: RepositoryHub,
+    user,
+):
+    # setup: create notes with similar titles
+    await create_keyword_note(
+        repo_hub=repo_hub,
+        user=user,
+        title="Test Note",
+        text="Content",
+    )
+    await create_keyword_note(
+        repo_hub=repo_hub,
+        user=user,
+        title="Test Note Extended",
+        text="Content",
+    )
+
+    # action: request search with exact_match=false
+    async with api_client(notes_app) as client:
+        response = await client.request(
+            method="GET",
+            url="/api/notes/search/by-title?query=Test Note&exact_match=false",
+        )
+
+    # check: both notes are returned
+    assert response.status_code == status.HTTP_200_OK
+    payload = response.json()
+    titles = {item["title"] for item in payload}
+    assert titles == {"Test Note", "Test Note Extended"}

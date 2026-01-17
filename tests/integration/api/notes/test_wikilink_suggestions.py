@@ -1,35 +1,37 @@
-from unittest.mock import AsyncMock
-
+import pytest
 from starlette import status
 
-from brain.application.abstractions.repositories.models import WikilinkSuggestion
+from brain.infrastructure.db.repositories.hub import RepositoryHub
+from tests.integration.api.notes.helpers import create_keyword_note
 
 
-def test_get_wikilink_suggestions(notes_api_client):
-    # setup: mock suggestions returned by interactor
-    client, mocks, user = notes_api_client
-    suggestions = [
-        WikilinkSuggestion(title="Alpha", represents_keyword=True),
-        WikilinkSuggestion(title="Beta", represents_keyword=False),
-    ]
-    mocks.search_wikilinks.search_wikilink_suggestions = AsyncMock(
-        return_value=suggestions
+@pytest.mark.asyncio
+async def test_get_wikilink_suggestions(
+    notes_app,
+    api_client,
+    repo_hub: RepositoryHub,
+    user,
+):
+    # setup: create keyword note and keyword without note
+    await create_keyword_note(
+        repo_hub=repo_hub,
+        user=user,
+        title="Alpha",
+        text="Text",
     )
+    await repo_hub.keywords.ensure_keywords(user_id=user.id, names=["Beta"])
 
     # action: request wikilink suggestions
-    response = client.request(
-        "GET",
-        "/api/notes/wikilink-suggestions?query=Al",
-    )
+    async with api_client(notes_app) as client:
+        response = await client.request(
+            method="GET",
+            url="/api/notes/wikilink-suggestions?query=a",
+        )
 
-    # check: response and interactor call
+    # check: response includes keyword note and missing note keyword
     assert response.status_code == status.HTTP_200_OK
     payload = response.json()
     assert payload == [
         {"title": "Alpha", "represents_keyword": True},
         {"title": "Beta", "represents_keyword": False},
     ]
-    mocks.search_wikilinks.search_wikilink_suggestions.assert_awaited_once_with(
-        user_id=user.id,
-        query="Al",
-    )

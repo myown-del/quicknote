@@ -1,82 +1,80 @@
-from datetime import datetime
-from uuid import uuid4
-from unittest.mock import AsyncMock
-
 import pytest
 from starlette import status
 
-from brain.application.interactors.notes.dto import CreateNote
-from brain.application.interactors.notes.exceptions import (
-    KeywordNotFoundException,
-    NoteTitleAlreadyExistsException,
-    NoteTitleRequiredException,
-)
-from brain.domain.entities.note import Note
+from brain.infrastructure.db.repositories.hub import RepositoryHub
+from tests.integration.api.notes.helpers import create_keyword_note
 
 
-def make_note(user_id, title="Note title", text="Note text"):
-    now = datetime(2024, 1, 2, 3, 4, 5)
-    return Note(
-        id=uuid4(),
-        user_id=user_id,
-        title=title,
-        text=text,
-        represents_keyword_id=uuid4(),
-        created_at=now,
-        updated_at=now,
-    )
-
-
-def test_create_note_success(notes_api_client):
-    # setup: mock create and get note interactors
-    client, mocks, user = notes_api_client
-    note_id = uuid4()
-    note = make_note(user.id, title="New Note", text="Body")
-    mocks.create_note.create_note = AsyncMock(return_value=note_id)
-    mocks.get_note.get_note_by_id = AsyncMock(return_value=note)
+@pytest.mark.asyncio
+async def test_create_note_success(notes_app, api_client, repo_hub: RepositoryHub, user):
+    # setup: ensure user exists in db
+    note_payload = {"title": "New Note", "text": "Body"}
 
     # action: create note via API
-    response = client.request(
-        "POST",
-        "/api/notes",
-        json={"title": "New Note", "text": "Body"},
-    )
+    async with api_client(notes_app) as client:
+        response = await client.request(
+            method="POST",
+            url="/api/notes",
+            json=note_payload,
+        )
 
-    # check: response and interactor args
+    # check: response and stored note match
     assert response.status_code == status.HTTP_201_CREATED
     payload = response.json()
-    assert payload["id"] == str(note.id)
     assert payload["title"] == "New Note"
     assert payload["text"] == "Body"
+    stored = await repo_hub.notes.get_by_title(
+        user_id=user.id,
+        title="New Note",
+        exact_match=True,
+    )
+    assert stored is not None
+    assert payload["id"] == str(stored.id)
 
-    create_args = mocks.create_note.create_note.call_args[0]
-    assert isinstance(create_args[0], CreateNote)
-    assert create_args[0].by_user_telegram_id == user.telegram_id
-    assert create_args[0].title == "New Note"
-    assert create_args[0].text == "Body"
-    mocks.get_note.get_note_by_id.assert_awaited_once_with(note_id)
+
+@pytest.mark.asyncio
+async def test_create_note_generates_untitled(notes_app, api_client, repo_hub: RepositoryHub, user):
+    # setup: no existing notes for user
+    note_payload = {"title": None, "text": "Body"}
+
+    # action: create note without title
+    async with api_client(notes_app) as client:
+        response = await client.request(
+            method="POST",
+            url="/api/notes",
+            json=note_payload,
+        )
+
+    # check: response uses generated title and note stored
+    assert response.status_code == status.HTTP_201_CREATED
+    payload = response.json()
+    assert payload["title"] == "Untitled 1"
+    stored = await repo_hub.notes.get_by_title(
+        user_id=user.id,
+        title="Untitled 1",
+        exact_match=True,
+    )
+    assert stored is not None
 
 
-@pytest.mark.parametrize(
-    "exception,detail",
-    [
-        (NoteTitleRequiredException(), "Note title cannot be null"),
-        (NoteTitleAlreadyExistsException(), "Note title must be unique"),
-        (KeywordNotFoundException(), "Keyword not found"),
-    ],
-)
-def test_create_note_errors(notes_api_client, exception, detail):
-    # setup: configure interactor to raise an error
-    client, mocks, _ = notes_api_client
-    mocks.create_note.create_note = AsyncMock(side_effect=exception)
-
-    # action: attempt to create an invalid note
-    response = client.request(
-        "POST",
-        "/api/notes",
-        json={"title": None, "text": "Body"},
+@pytest.mark.asyncio
+async def test_create_note_duplicate_title(notes_app, api_client, repo_hub: RepositoryHub, user):
+    # setup: create a note with the same title
+    await create_keyword_note(
+        repo_hub=repo_hub,
+        user=user,
+        title="Dup Title",
+        text="Text",
     )
 
-    # check: correct error response
+    # action: attempt to create a duplicate title
+    async with api_client(notes_app) as client:
+        response = await client.request(
+            method="POST",
+            url="/api/notes",
+            json={"title": "Dup Title", "text": "Another"},
+        )
+
+    # check: validation error for duplicate title
     assert response.status_code == status.HTTP_400_BAD_REQUEST
-    assert response.json()["detail"] == detail
+    assert response.json()["detail"] == "Note title must be unique"

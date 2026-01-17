@@ -1,141 +1,156 @@
-from datetime import datetime
 from uuid import uuid4
-from unittest.mock import AsyncMock
 
 import pytest
 from starlette import status
 
-from brain.application.interactors.notes.dto import UpdateNote
-from brain.application.interactors.notes.exceptions import (
-    KeywordNotFoundException,
-    NoteNotFoundException,
-    NoteTitleAlreadyExistsException,
-    NoteTitleRequiredException,
-)
-from brain.domain.entities.note import Note
+from brain.domain.entities.user import User
+from brain.infrastructure.db.repositories.hub import RepositoryHub
+from tests.integration.api.notes.helpers import create_keyword_note
 
 
-def make_note(user_id, title="Note title", text="Note text"):
-    now = datetime(2024, 1, 2, 3, 4, 5)
-    return Note(
-        id=uuid4(),
-        user_id=user_id,
-        title=title,
-        text=text,
-        represents_keyword_id=uuid4(),
-        created_at=now,
-        updated_at=now,
+@pytest.mark.asyncio
+async def test_update_note_success(
+    notes_app,
+    api_client,
+    repo_hub: RepositoryHub,
+    user,
+):
+    # setup: create a note owned by the user
+    existing_note = await create_keyword_note(
+        repo_hub=repo_hub,
+        user=user,
+        title="Old",
+        text="Text",
     )
-
-
-def test_update_note_success(notes_api_client):
-    # setup: mock get and update interactors
-    client, mocks, user = notes_api_client
-    existing_note = make_note(user.id, title="Old")
-    updated_note = make_note(user.id, title="New")
-    note_id = existing_note.id
-    mocks.get_note.get_note_by_id = AsyncMock(return_value=existing_note)
-    mocks.update_note.update_note = AsyncMock(return_value=updated_note)
 
     # action: update note via API
-    response = client.request(
-        "PATCH",
-        f"/api/notes/{note_id}",
-        json={"title": "New"},
-    )
+    async with api_client(notes_app) as client:
+        response = await client.request(
+            method="PATCH",
+            url=f"/api/notes/{existing_note.id}",
+            json={"title": "New"},
+        )
 
-    # check: response payload and interactor args
+    # check: response and updated note match
     assert response.status_code == status.HTTP_200_OK
     payload = response.json()
-    assert payload["id"] == str(updated_note.id)
     assert payload["title"] == "New"
-
-    update_args = mocks.update_note.update_note.call_args[0]
-    assert isinstance(update_args[0], UpdateNote)
-    assert update_args[0].note_id == note_id
-    assert update_args[0].title == "New"
+    stored = await repo_hub.notes.get_by_id(existing_note.id)
+    assert stored is not None
+    assert stored.title == "New"
 
 
-def test_update_note_not_found(notes_api_client):
-    # setup: mock missing note
-    client, mocks, _ = notes_api_client
+@pytest.mark.asyncio
+async def test_update_note_not_found(notes_app, api_client):
+    # setup: use a random note id
     note_id = uuid4()
-    mocks.get_note.get_note_by_id = AsyncMock(return_value=None)
 
     # action: update a missing note
-    response = client.request(
-        "PATCH",
-        f"/api/notes/{note_id}",
-        json={"title": "New"},
-    )
+    async with api_client(notes_app) as client:
+        response = await client.request(
+            method="PATCH",
+            url=f"/api/notes/{note_id}",
+            json={"title": "New"},
+        )
 
     # check: not found response
     assert response.status_code == status.HTTP_404_NOT_FOUND
     assert response.json()["detail"] == "Note not found"
 
 
-def test_update_note_forbidden(notes_api_client):
-    # setup: mock note belonging to another user
-    client, mocks, _ = notes_api_client
-    note = make_note(uuid4())
-    note_id = note.id
-    mocks.get_note.get_note_by_id = AsyncMock(return_value=note)
+@pytest.mark.asyncio
+async def test_update_note_forbidden(
+    notes_app,
+    api_client,
+    repo_hub: RepositoryHub,
+    user,
+):
+    # setup: create a note for another user
+    other_user = User(
+        id=uuid4(),
+        telegram_id=321,
+        username="other",
+        first_name="Other",
+        last_name="User",
+    )
+    await repo_hub.users.create(entity=other_user)
+    note = await create_keyword_note(
+        repo_hub=repo_hub,
+        user=other_user,
+        title="Other Note",
+        text="Text",
+    )
 
     # action: update note not owned by user
-    response = client.request(
-        "PATCH",
-        f"/api/notes/{note_id}",
-        json={"title": "New"},
-    )
+    async with api_client(notes_app) as client:
+        response = await client.request(
+            method="PATCH",
+            url=f"/api/notes/{note.id}",
+            json={"title": "New"},
+        )
 
     # check: forbidden response
     assert response.status_code == status.HTTP_403_FORBIDDEN
     assert response.json()["detail"] == "Forbidden"
 
 
-@pytest.mark.parametrize(
-    "exception,detail",
-    [
-        (NoteTitleRequiredException(), "Note title cannot be null"),
-        (NoteTitleAlreadyExistsException(), "Note title must be unique"),
-        (KeywordNotFoundException(), "Keyword not found"),
-    ],
-)
-def test_update_note_errors(notes_api_client, exception, detail):
-    # setup: mock update interactor failure
-    client, mocks, user = notes_api_client
-    note = make_note(user.id)
-    note_id = note.id
-    mocks.get_note.get_note_by_id = AsyncMock(return_value=note)
-    mocks.update_note.update_note = AsyncMock(side_effect=exception)
-
-    # action: update note with invalid data
-    response = client.request(
-        "PATCH",
-        f"/api/notes/{note_id}",
-        json={"title": "New"},
+@pytest.mark.asyncio
+async def test_update_note_requires_title(
+    notes_app,
+    api_client,
+    repo_hub: RepositoryHub,
+    user,
+):
+    # setup: create a note to update
+    note = await create_keyword_note(
+        repo_hub=repo_hub,
+        user=user,
+        title="Title",
+        text="Text",
     )
 
-    # check: error response
+    # action: update note with null title
+    async with api_client(notes_app) as client:
+        response = await client.request(
+            method="PATCH",
+            url=f"/api/notes/{note.id}",
+            json={"title": None},
+        )
+
+    # check: title required error
     assert response.status_code == status.HTTP_400_BAD_REQUEST
-    assert response.json()["detail"] == detail
+    assert response.json()["detail"] == "Note title cannot be null"
 
 
-def test_update_note_interactor_not_found(notes_api_client):
-    # setup: mock delete interactor not found error
-    client, mocks, user = notes_api_client
-    note = make_note(user.id)
-    note_id = note.id
-    mocks.get_note.get_note_by_id = AsyncMock(return_value=note)
-    mocks.update_note.update_note = AsyncMock(side_effect=NoteNotFoundException())
-
-    # action: update note that interactor cannot find
-    response = client.request(
-        "PATCH",
-        f"/api/notes/{note_id}",
-        json={"title": "New"},
+@pytest.mark.asyncio
+async def test_update_note_duplicate_title(
+    notes_app,
+    api_client,
+    repo_hub: RepositoryHub,
+    user,
+):
+    # setup: create two notes
+    note = await create_keyword_note(
+        repo_hub=repo_hub,
+        user=user,
+        title="First",
+        text="Text",
+    )
+    await create_keyword_note(
+        repo_hub=repo_hub,
+        user=user,
+        title="Dup",
+        text="Text",
     )
 
-    # check: not found response
-    assert response.status_code == status.HTTP_404_NOT_FOUND
-    assert response.json()["detail"] == "Note not found"
+    # action: update note with existing title
+    async with api_client(notes_app) as client:
+        response = await client.request(
+            method="PATCH",
+            url=f"/api/notes/{note.id}",
+            json={"title": "Dup"},
+        )
+
+    # check: duplicate title error
+    assert response.status_code == status.HTTP_400_BAD_REQUEST
+    assert response.json()["detail"] == "Note title must be unique"

@@ -1,55 +1,87 @@
-from unittest.mock import AsyncMock
+import io
+import json
+import zipfile
 
+import pytest
 from starlette import status
 
+from brain.infrastructure.db.repositories.hub import RepositoryHub
 
-def test_import_notes_success(notes_api_client):
-    # setup: mock import interactor
-    client, mocks, user = notes_api_client
-    mocks.import_notes.import_notes = AsyncMock(return_value=None)
+
+def make_zip_with_note(title: str, text: str | None) -> bytes:
+    buffer = io.BytesIO()
+    with zipfile.ZipFile(
+        file=buffer,
+        mode="w",
+        compression=zipfile.ZIP_DEFLATED,
+    ) as zip_file:
+        payload = {"title": title, "text": text}
+        zip_file.writestr(
+            zinfo_or_arcname=f"{title}.json",
+            data=json.dumps(payload),
+        )
+    return buffer.getvalue()
+
+
+@pytest.mark.asyncio
+async def test_import_notes_success(
+    notes_app,
+    api_client,
+    repo_hub: RepositoryHub,
+    user,
+):
+    # setup: build a valid zip with one note
+    zip_bytes = make_zip_with_note(title="Imported Note", text="Imported Body")
 
     # action: upload zip file
-    response = client.request(
-        "POST",
-        "/api/notes/import",
-        files={"file": ("notes.zip", b"zip-contents", "application/zip")},
-    )
+    async with api_client(notes_app) as client:
+        response = await client.request(
+            method="POST",
+            url="/api/notes/import",
+            files={"file": ("notes.zip", zip_bytes, "application/zip")},
+        )
 
-    # check: response and interactor args
+    # check: note created in database
     assert response.status_code == status.HTTP_204_NO_CONTENT
-    args = mocks.import_notes.import_notes.call_args[0]
-    assert args[0] == user.telegram_id
-    assert args[1] == b"zip-contents"
+    stored = await repo_hub.notes.get_by_title(
+        user_id=user.id,
+        title="Imported Note",
+        exact_match=True,
+    )
+    assert stored is not None
+    assert stored.text == "Imported Body"
 
 
-def test_import_notes_invalid_extension(notes_api_client):
-    # setup: no interactor call expected
-    client, mocks, _ = notes_api_client
+@pytest.mark.asyncio
+async def test_import_notes_invalid_extension(notes_app, api_client):
+    # setup: prepare a non-zip file upload
+    bad_file = ("notes.txt", b"content", "text/plain")
 
     # action: upload non-zip file
-    response = client.request(
-        "POST",
-        "/api/notes/import",
-        files={"file": ("notes.txt", b"content", "text/plain")},
-    )
+    async with api_client(notes_app) as client:
+        response = await client.request(
+            method="POST",
+            url="/api/notes/import",
+            files={"file": bad_file},
+        )
 
-    # check: validation error and no interactor calls
+    # check: validation error
     assert response.status_code == status.HTTP_400_BAD_REQUEST
     assert response.json()["detail"] == "File must be a .zip extension"
-    assert mocks.import_notes.import_notes.call_count == 0
 
 
-def test_import_notes_invalid_zip(notes_api_client):
-    # setup: mock interactor zip failure
-    client, mocks, _ = notes_api_client
-    mocks.import_notes.import_notes = AsyncMock(side_effect=ValueError())
+@pytest.mark.asyncio
+async def test_import_notes_invalid_zip(notes_app, api_client):
+    # setup: prepare invalid zip content
+    invalid_zip = ("notes.zip", b"bad-zip", "application/zip")
 
     # action: upload invalid zip
-    response = client.request(
-        "POST",
-        "/api/notes/import",
-        files={"file": ("notes.zip", b"bad-zip", "application/zip")},
-    )
+    async with api_client(notes_app) as client:
+        response = await client.request(
+            method="POST",
+            url="/api/notes/import",
+            files={"file": invalid_zip},
+        )
 
     # check: error response for invalid zip
     assert response.status_code == status.HTTP_400_BAD_REQUEST

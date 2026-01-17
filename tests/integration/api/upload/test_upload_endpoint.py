@@ -47,7 +47,7 @@ def client(event_loop):
     
     # Container
     container = make_async_container(MockProvider())
-    setup_dishka(container, app)
+    setup_dishka(container=container, app=app)
     
     with TestClient(app) as client:
         yield client
@@ -57,6 +57,6 @@ def client(event_loop):
 
 def test_upload_image(client):
     files = {'file': ('test.jpg', b'content', 'image/jpeg')}
-    response = client.post("/api/upload/image", files=files)
+    response = client.post(url="/api/upload/image", files=files)
     assert response.status_code == 200
     assert response.json() == {"url": "http://localhost:9000/test-bucket/image.jpg"}
