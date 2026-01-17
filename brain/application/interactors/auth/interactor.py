@@ -78,6 +78,8 @@ class AuthInteractor:
         except TokenInvalidError:
             raise JwtTokenInvalidException()
 
+        if isinstance(data.get("user_id"), str):
+            data["user_id"] = UUID(data["user_id"])
         jwt_token_payload = DecodedJwtTokenPayload(**data)
         return jwt_token_payload
 
