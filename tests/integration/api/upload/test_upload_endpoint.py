@@ -9,7 +9,7 @@ from brain.config.models import Config, S3Config, APIConfig
 from brain.infrastructure.s3.client import S3Client
 
 @pytest.fixture
-def client():
+def client(event_loop):
     # Mock Config
     mock_config = MagicMock(spec=Config)
     mock_config.api = APIConfig(
@@ -51,6 +51,8 @@ def client():
     
     with TestClient(app) as client:
         yield client
+
+    event_loop.run_until_complete(container.close())
 
 
 def test_upload_image(client):

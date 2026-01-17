@@ -40,6 +40,7 @@ class KeywordDB(Base, CreatedUpdatedMixin):
 
 class NoteKeywordDB(Base):
     __tablename__ = "note_keywords"
+    __mapper_args__ = {"confirm_deleted_rows": False}
 
     note_id: Mapped[UUID] = mapped_column(
         Uuid,

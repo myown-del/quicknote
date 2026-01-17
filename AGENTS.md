@@ -66,12 +66,14 @@
 
   * `KeywordNoteService`
   * `NoteKeywordSyncService`
-* Avoid generic names:
-
-  * ❌ `Utils`, `Helpers`, `BaseService`
+* Avoid generic names: `Utils`, `Helpers`, `BaseService`
 
 ## 6. Design Principle to Follow
 
 > Prefer **composition over inheritance**
 > Keep **use cases thin**
 > Make **business rules explicit and reusable**
+
+## 7. Development rules
+- For new features we always write new tests. Integration tests are priority.
+- If we refactor or update old features we should check for tests that need to be rewritten with these features.

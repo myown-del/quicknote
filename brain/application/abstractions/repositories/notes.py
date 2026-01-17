@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from datetime import datetime
 from typing import Protocol
 from uuid import UUID
 
@@ -16,7 +17,12 @@ class INotesRepository(Protocol):
         raise NotImplementedError
 
     @abstractmethod
-    async def get_by_user_telegram_id(self, telegram_id: int) -> list[Note]:
+    async def get_by_user_telegram_id(
+        self,
+        telegram_id: int,
+        from_date: datetime | None = None,
+        to_date: datetime | None = None,
+    ) -> list[Note]:
         raise NotImplementedError
 
     @abstractmethod

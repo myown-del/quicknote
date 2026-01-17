@@ -1,4 +1,4 @@
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, AsyncMock
 import pytest
 from fastapi.testclient import TestClient
 from dishka import make_async_container, Provider, Scope, provide
@@ -18,7 +18,7 @@ def mock_search_notes_interactor():
     return MagicMock(spec=SearchNotesByTitleInteractor)
 
 @pytest.fixture
-def client(mock_search_notes_interactor):
+def client(mock_search_notes_interactor, event_loop):
     # Mock Config
     mock_config = MagicMock(spec=Config)
     mock_config.api = APIConfig(
@@ -62,6 +62,8 @@ def client(mock_search_notes_interactor):
     with TestClient(app) as client:
         yield client
 
+    event_loop.run_until_complete(container.close())
+
 def test_search_notes_default_exact_match(client, mock_search_notes_interactor):
     note_id = uuid4()
     title = "Test Note"
@@ -75,7 +77,7 @@ def test_search_notes_default_exact_match(client, mock_search_notes_interactor):
         represents_keyword_id=None
     )
     
-    mock_search_notes_interactor.search.return_value = [note]
+    mock_search_notes_interactor.search = AsyncMock(return_value=[note])
 
     response = client.get(f"/api/notes/search/by-title?query={title}")
 
@@ -101,7 +103,7 @@ def test_search_notes_exact_match_true(client, mock_search_notes_interactor):
         represents_keyword_id=None
     )
     
-    mock_search_notes_interactor.search.return_value = [note]
+    mock_search_notes_interactor.search = AsyncMock(return_value=[note])
 
     response = client.get(f"/api/notes/search/by-title?query={title}&exact_match=true")
 
@@ -126,7 +128,7 @@ def test_search_notes_exact_match_explicit_false(client, mock_search_notes_inter
         represents_keyword_id=None
     )
     
-    mock_search_notes_interactor.search.return_value = [note]
+    mock_search_notes_interactor.search = AsyncMock(return_value=[note])
 
     response = client.get(f"/api/notes/search/by-title?query={title}&exact_match=false")
 

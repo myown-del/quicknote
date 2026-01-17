@@ -22,12 +22,21 @@ class NotesRepository(INotesRepository):
         self._session.add(db_model)
         await self._session.commit()
 
-    async def get_by_user_telegram_id(self, telegram_id: int) -> list[Note]:
+    async def get_by_user_telegram_id(
+        self,
+        telegram_id: int,
+        from_date: datetime | None = None,
+        to_date: datetime | None = None,
+    ) -> list[Note]:
         query = (
             select(NoteDB)
             .join(UserDB)
             .where(UserDB.telegram_id == telegram_id)
         )
+        if from_date:
+            query = query.where(NoteDB.created_at >= from_date)
+        if to_date:
+            query = query.where(NoteDB.created_at <= to_date)
         result = await self._session.execute(query)
 
         db_models = result.unique().scalars().all()

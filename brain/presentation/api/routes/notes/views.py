@@ -1,3 +1,4 @@
+from datetime import datetime
 from uuid import UUID
 
 from dishka import FromDishka
@@ -41,9 +42,15 @@ from brain.presentation.api.routes.notes.models import (
 @inject
 async def get_notes(
         interactor: FromDishka[GetNotesInteractor],
+        from_date: datetime | None = Query(None),
+        to_date: datetime | None = Query(None),
         user: User = Depends(get_user_from_request),
 ):
-    notes = await interactor.get_notes(user.telegram_id)
+    notes = await interactor.get_notes(
+        user.telegram_id,
+        from_date=from_date,
+        to_date=to_date,
+    )
     return [
         map_note_to_read_schema(note)
         for note in notes
