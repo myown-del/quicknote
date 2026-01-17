@@ -1,4 +1,4 @@
-# MyBrain - Graph-based notes app
+# Brain - Graph-based notes app
 
 Backend for a graph-based note system with both HTTP API and Telegram bot entrypoints. Notes, keywords, and wikilinks are stored in Postgres, graph relationships are maintained in Neo4j, and uploads are stored in an S3-compatible bucket (MinIO in local dev). Redis is used for caching/auxiliary data.
 
