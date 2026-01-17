@@ -6,11 +6,11 @@ aiogram-dialog==2.1.0
 dishka==1.2.0
 testcontainers~=4.7.2
 alembic~=1.13.2
-fastapi==0.109.1
+fastapi==0.115.4
 python-dotenv~=1.0.1
 uvicorn~=0.20.0
 pydantic~=2.8.2
-starlette~=0.35.1
+starlette~=0.41.0
 SQLAlchemy~=2.0.31
 adaptix~=3.0.0b7
 redis==5.0.8
