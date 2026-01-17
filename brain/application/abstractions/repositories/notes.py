@@ -28,6 +28,15 @@ class INotesRepository(Protocol):
         raise NotImplementedError
 
     @abstractmethod
+    async def search_by_title(
+        self,
+        user_id: UUID,
+        query: str,
+        exact_match: bool = False,
+    ) -> list[Note]:
+        raise NotImplementedError
+
+    @abstractmethod
     async def update(self, entity: Note):
         raise NotImplementedError
 

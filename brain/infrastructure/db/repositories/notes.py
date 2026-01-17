@@ -59,6 +59,33 @@ class NotesRepository(INotesRepository):
         if db_model:
             return map_note_to_dm(db_model)
 
+    async def search_by_title(
+        self,
+        user_id: UUID,
+        query: str,
+        exact_match: bool = False,
+    ) -> list[Note]:
+        normalized = (query or "").strip()
+        if not normalized:
+            return []
+
+        stmt = (
+            select(NoteDB)
+            .where(NoteDB.user_id == user_id)
+            .where(NoteDB.title.isnot(None))
+        )
+        if exact_match:
+            stmt = stmt.where(NoteDB.title == query)
+        else:
+            stmt = stmt.where(
+                func.lower(func.trim(NoteDB.title)).like(f"%{normalized.lower()}%")
+            )
+
+        stmt = stmt.order_by(NoteDB.updated_at.desc())
+        result = await self._session.execute(stmt)
+        db_models = result.scalars().all()
+        return [map_note_to_dm(db_model) for db_model in db_models]
+
     async def update(self, entity: Note):
         query = (
             select(NoteDB)

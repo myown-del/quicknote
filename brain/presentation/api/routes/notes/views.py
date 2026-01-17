@@ -10,6 +10,7 @@ from brain.application.interactors import (
     DeleteNoteInteractor,
     GetNoteInteractor,
     GetNotesInteractor,
+    SearchNotesByTitleInteractor,
     SearchWikilinkSuggestionsInteractor,
     UpdateNoteInteractor,
     ExportNotesInteractor,
@@ -66,23 +67,21 @@ async def get_wikilink_suggestions(
 
 
 @inject
-async def find_note(
-        interactor: FromDishka[GetNoteInteractor],
-        title: str = Query(..., min_length=1),
+async def search_notes_by_title(
+        interactor: FromDishka[SearchNotesByTitleInteractor],
+        query: str = Query(..., min_length=1),
         exact_match: bool = Query(False),
         user: User = Depends(get_user_from_request),
 ):
-    note = await interactor.get_note_by_title(
+    notes = await interactor.search(
         user_id=user.id,
-        title=title,
+        query=query,
         exact_match=exact_match,
     )
-    if not note:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Note not found"
-        )
-    return map_note_to_read_schema(note)
+    return [
+        map_note_to_read_schema(note)
+        for note in notes
+    ]
 
 
 @inject
@@ -242,11 +241,11 @@ def get_router() -> APIRouter:
         status_code=status.HTTP_200_OK
     )
     router.add_api_route(
-        path='/find',
-        endpoint=find_note,
+        path='/search/by-title',
+        endpoint=search_notes_by_title,
         methods=["GET"],
-        response_model=ReadNoteSchema,
-        summary="Find note by title",
+        response_model=list[ReadNoteSchema],
+        summary="Search notes by title",
         status_code=status.HTTP_200_OK
     )
     router.add_api_route(
