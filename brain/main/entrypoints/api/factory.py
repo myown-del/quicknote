@@ -15,12 +15,15 @@ from brain.presentation.tgbot.provider import DispatcherProvider, BotProvider
 from brain.infrastructure.db.provider import DatabaseProvider
 from brain.infrastructure.graph.provider import Neo4jProvider
 from brain.infrastructure.s3.provider import S3Provider
+from brain.main.entrypoints.taskiq.broker import broker as taskiq_broker
 from brain.application.interactors.factory import InteractorProvider
+from brain.infrastructure.telegram.provider import TelegramInfrastructureProvider
 
 logger = logging.getLogger(__name__)
 
 
 async def on_startup(container: AsyncContainer, config: APIConfig):
+    await taskiq_broker.startup()
     logger.info("Startup complete")
     
 
@@ -40,6 +43,7 @@ def create_app() -> FastAPI:
         Neo4jProvider(),
         S3Provider(),
         InteractorProvider(),
+        TelegramInfrastructureProvider(),
         JwtProvider(),
         DispatcherProvider(),
         context={Config: config}

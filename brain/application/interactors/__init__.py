@@ -8,6 +8,7 @@ from .notes.update_note import UpdateNoteInteractor
 from .graph.get_graph import GetGraphInteractor
 from .users.get_user import GetUserInteractor
 from .users.interactor import UserInteractor
+from .users.upload_profile_picture import UploadUserProfilePictureInteractor
 from .auth.session_interactor import TelegramBotAuthSessionInteractor
 from .notes.export_notes import ExportNotesInteractor
 from .notes.import_notes import ImportNotesInteractor

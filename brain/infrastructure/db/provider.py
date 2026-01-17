@@ -6,6 +6,9 @@ from sqlalchemy.ext.asyncio import async_sessionmaker, AsyncSession, AsyncEngine
 from brain.application.abstractions.repositories.notes import INotesRepository
 from brain.application.abstractions.repositories.keywords import IKeywordsRepository
 from brain.application.abstractions.repositories.users import IUsersRepository
+from brain.application.abstractions.repositories.s3_files import (
+    IS3FilesRepository,
+)
 from brain.application.abstractions.repositories.jwt import (
     IJwtRefreshTokensRepository,
 )
@@ -18,6 +21,7 @@ from brain.infrastructure.db.repositories.hub import RepositoryHub
 from brain.infrastructure.db.repositories.notes import NotesRepository
 from brain.infrastructure.db.repositories.keywords import KeywordsRepository
 from brain.infrastructure.db.repositories.users import UsersRepository
+from brain.infrastructure.db.repositories.s3_files import S3FilesRepository
 from brain.infrastructure.db.repositories.jwt import (
     JwtRefreshTokensRepository,
 )
@@ -54,6 +58,9 @@ class DatabaseProvider(Provider):
     )
     keywords_repository = provide(
         KeywordsRepository, scope=Scope.REQUEST, provides=IKeywordsRepository
+    )
+    s3_files_repository = provide(
+        S3FilesRepository, scope=Scope.REQUEST, provides=IS3FilesRepository
     )
     tg_bot_auth_repository = provide(
         TelegramBotAuthSessionsRepository,

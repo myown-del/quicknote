@@ -11,6 +11,20 @@ services:
       - "8080:8080"
     command: sh -c "python -m brain.main.entrypoints.setup_tasks && python -m brain.main.entrypoints.api"
 
+  taskiq:
+    restart: always
+    env_file:
+      - .env
+    build: .
+    volumes:
+      - "./brain:/brain"
+    command: python -m brain.main.entrypoints.taskiq
+    depends_on:
+      - redis
+      - postgres
+      - neo4j
+      - minio
+
   postgres:
     image: postgres:13
     environment:
@@ -52,11 +66,16 @@ services:
     image: minio/mc
     depends_on:
       - minio
+    env_file:
+      - .env
     entrypoint: >
       /bin/sh -c "
-      /usr/bin/mc alias set myminio http://minio:9000 ${MINIO_ROOT_USER:-minioadmin} ${MINIO_ROOT_PASSWORD:-minioadmin};
-      /usr/bin/mc mb --ignore-existing myminio/${MINIO_BUCKET_NAME:-brain-bucket};
-      /usr/bin/mc anonymous set public myminio/${MINIO_BUCKET_NAME:-brain-bucket};
+      until /usr/bin/mc alias set myminio http://minio:9000 ${MINIO_ROOT_USER:-minioadmin} ${MINIO_ROOT_PASSWORD:-minioadmin}; do
+        echo 'waiting for minio...';
+        sleep 2;
+      done;
+      /usr/bin/mc mb --ignore-existing myminio/${S3__BUCKET_NAME:-brain-bucket};
+      /usr/bin/mc anonymous set public myminio/${S3__BUCKET_NAME:-brain-bucket};
       exit 0;
       "
 

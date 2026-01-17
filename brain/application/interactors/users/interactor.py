@@ -23,6 +23,7 @@ class UserInteractor:
         user = await self._users_repo.get_by_telegram_id(user_data.telegram_id)
         if user:
             user_entity.id = user.id
+            user_entity.profile_picture_file_id = user.profile_picture_file_id
             await self._users_repo.update(user_entity)
         else:
             await self._users_repo.create(user_entity)

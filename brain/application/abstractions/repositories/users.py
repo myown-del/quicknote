@@ -29,3 +29,7 @@ class IUsersRepository(Protocol):
     @abstractmethod
     async def delete_all(self) -> None:
         raise NotImplementedError
+
+    @abstractmethod
+    async def get_all(self) -> list[User]:
+        raise NotImplementedError

@@ -1,0 +1,1 @@
+"""Taskiq worker entrypoint package."""

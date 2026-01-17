@@ -13,6 +13,10 @@ from brain.application.interactors import (
     UserInteractor,
     ExportNotesInteractor,
     ImportNotesInteractor,
+    UploadUserProfilePictureInteractor,
+)
+from brain.application.interactors.users.update_all_profile_pictures import (
+    UpdateAllUsersProfilePicturesInteractor,
 )
 from brain.application.services.keyword_notes import KeywordNoteService
 from brain.application.services.note_titles import NoteTitleService
@@ -26,6 +30,12 @@ from brain.application.interactors.auth.session_interactor import (
 class InteractorProvider(Provider):
     get_user_interactor = provide(UserInteractor, scope=Scope.REQUEST)
     get_get_user_interactor = provide(GetUserInteractor, scope=Scope.REQUEST)
+    get_upload_user_profile_picture_interactor = provide(
+        UploadUserProfilePictureInteractor, scope=Scope.REQUEST
+    )
+    get_update_all_users_profile_pictures_interactor = provide(
+        UpdateAllUsersProfilePicturesInteractor, scope=Scope.REQUEST
+    )
     get_keyword_note_service = provide(KeywordNoteService, scope=Scope.REQUEST)
     get_note_title_service = provide(NoteTitleService, scope=Scope.REQUEST)
     get_note_keyword_sync_service = provide(NoteKeywordSyncService, scope=Scope.REQUEST)

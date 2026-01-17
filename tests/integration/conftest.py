@@ -14,11 +14,13 @@ from brain.config.parser import load_config
 from brain.config.provider import ConfigProvider
 from brain.domain.entities.user import User
 from brain.infrastructure.db.provider import DatabaseProvider
-from brain.infrastructure.db.provider import DatabaseProvider
 from brain.infrastructure.db.repositories.hub import RepositoryHub
 from brain.infrastructure.jwt.provider import JwtProvider
 from tests.fixtures.db_provider import TestDbProvider
+from tests.fixtures.profile_picture_storage_provider import TestProfilePictureStorageProvider
 from tests.fixtures.graph_provider import TestGraphProvider, TestNeo4jConfigProvider
+from tests.fixtures.profile_picture_provider import TestProfilePictureProvider
+from tests.fixtures.bot_provider import MockBotProvider
 
 
 @pytest_asyncio.fixture(scope="session")
@@ -45,6 +47,9 @@ async def dishka():
         DatabaseProvider(),
         TestNeo4jConfigProvider(),
         TestGraphProvider(),
+        TestProfilePictureStorageProvider(),
+        TestProfilePictureProvider(),
+        MockBotProvider(),
         InteractorProvider(),
         JwtProvider(),
         context={Config: config}
@@ -65,6 +70,7 @@ async def dishka_request(dishka: AsyncContainer) -> AsyncContainer:
 
 
 async def clear_db(repo_hub: RepositoryHub):
+    await repo_hub.s3_files.delete_all()
     await repo_hub.users.delete_all()
     await repo_hub.notes.delete_all()
 

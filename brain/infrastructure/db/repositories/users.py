@@ -32,8 +32,16 @@ class UsersRepository(IUsersRepository):
         old_db_model.username = entity.username
         old_db_model.first_name = entity.first_name
         old_db_model.last_name = entity.last_name
+        old_db_model.profile_picture_file_id = entity.profile_picture_file_id
         old_db_model.updated_at = datetime.utcnow()
         await self._session.commit()
+
+    async def get_by_telegram_id(self, telegram_id: int) -> User | None:
+        query = select(UserDB).where(UserDB.telegram_id == telegram_id)
+        result = await self._session.execute(query)
+        db_model = result.scalar()
+        if db_model:
+            return map_user_to_dm(db_model)
 
     async def get_by_telegram_id(self, telegram_id: int) -> User | None:
         query = select(UserDB).where(UserDB.telegram_id == telegram_id)
@@ -50,3 +58,9 @@ class UsersRepository(IUsersRepository):
     async def delete_all(self) -> None:
         await self._session.execute(text("DELETE FROM users"))
         await self._session.commit()
+
+    async def get_all(self) -> list[User]:
+        query = select(UserDB)
+        result = await self._session.execute(query)
+        db_models = result.scalars().all()
+        return [map_user_to_dm(db_model) for db_model in db_models]
