@@ -28,5 +28,5 @@ class S3Client:
             Body=file_content,
             **extra_args
         )
-        # Construct public URL (assuming public bucket)
+        
         return f"{self.config.endpoint_url}/{self.bucket}/{object_name}"
