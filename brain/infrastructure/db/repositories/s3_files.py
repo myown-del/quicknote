@@ -10,7 +10,8 @@ from brain.infrastructure.db.mappers.s3_files import (
     map_s3_file_to_dm,
     map_s3_file_to_db,
 )
-from brain.infrastructure.db.models.user import S3FileDB, UserDB
+from brain.infrastructure.db.models.s3 import S3FileDB
+from brain.infrastructure.db.models.user import UserDB
 
 
 class S3FilesRepository(IS3FilesRepository):
@@ -33,7 +34,6 @@ class S3FilesRepository(IS3FilesRepository):
     async def update(self, entity: S3File) -> None:
         old_db_model = await self._get_db_by_id(entity.id)
         old_db_model.object_name = entity.object_name
-        old_db_model.url = entity.url
         old_db_model.content_type = entity.content_type
         old_db_model.updated_at = datetime.utcnow()
         await self._session.commit()

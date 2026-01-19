@@ -5,6 +5,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from brain.infrastructure.db.models.base import Base
 from brain.infrastructure.db.models.mixins import CreatedUpdatedMixin
+from brain.infrastructure.db.models.s3 import S3FileDB
 
 
 class UserDB(Base, CreatedUpdatedMixin):
@@ -24,17 +25,8 @@ class UserDB(Base, CreatedUpdatedMixin):
     notes = relationship("NoteDB", back_populates="user", lazy="selectin")
     keywords = relationship("KeywordDB", back_populates="user", lazy="selectin")
     profile_picture_file = relationship(
-        "S3FileDB",
+        S3FileDB,
         lazy="selectin",
         uselist=False,
         foreign_keys="UserDB.profile_picture_file_id",
     )
-
-
-class S3FileDB(Base, CreatedUpdatedMixin):
-    __tablename__ = "s3_files"
-
-    id: Mapped[UUID] = mapped_column(Uuid, primary_key=True)
-    object_name: Mapped[str] = mapped_column(String(length=255), nullable=False)
-    url: Mapped[str] = mapped_column(String(length=2048), nullable=False)
-    content_type: Mapped[str | None] = mapped_column(String(length=255), nullable=True)

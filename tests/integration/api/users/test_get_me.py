@@ -11,6 +11,7 @@ from httpx import AsyncClient, ASGITransport
 from starlette import status
 
 from brain.config.models import Config
+from brain.domain.entities.s3_file import S3File
 from brain.domain.entities.user import User
 from brain.application.interactors.auth.interactor import AuthInteractor
 from brain.infrastructure.db.repositories.hub import RepositoryHub
@@ -56,10 +57,21 @@ async def test_get_me_returns_user_info(
         updated_at=created_at,
     )
     await repo_hub.users.create(entity=user)
+
+    # setup: attach profile picture
+    config = await dishka_request.get(Config)
+    profile_picture = S3File(
+        id=uuid4(),
+        object_name=f"avatars/{user.id}/profile.jpg",
+        content_type="image/jpeg",
+    )
+    await repo_hub.s3_files.create(entity=profile_picture)
+    user.profile_picture_file_id = profile_picture.id
+    await repo_hub.users.update(entity=user)
+
     stored_user = await repo_hub.users.get_by_id(entity_id=user.id)
     auth_interactor = await dishka_request.get(AuthInteractor)
     tokens = await auth_interactor.login(telegram_id=user.telegram_id)
-    config = await dishka_request.get(Config)
     app = create_bare_app(config.api)
     setup_dishka(container=dishka, app=app)
 
@@ -82,6 +94,15 @@ async def test_get_me_returns_user_info(
     assert payload["last_name"] == stored_user.last_name
     assert payload["created_at"] == stored_user.created_at.isoformat()
     assert payload["updated_at"] == stored_user.updated_at.isoformat()
+
+    assert payload["profile_picture"] is not None
+    assert payload["profile_picture"]["id"] == str(profile_picture.id)
+    assert payload["profile_picture"]["object_name"] == profile_picture.object_name
+    assert payload["profile_picture"]["content_type"] == "image/jpeg"
+    assert (
+        payload["profile_picture"]["url"]
+        == f"{config.s3.external_host}/{config.s3.bucket_name}/{profile_picture.object_name}"
+    )
 
 
 @pytest.mark.asyncio

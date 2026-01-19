@@ -32,7 +32,7 @@ class UploadUserProfilePictureInteractor:
 
         extension = self._get_extension(content_type)
         object_name = f"avatars/{user.id}/{uuid4()}.{extension}"
-        url = self._profile_picture_storage.upload(
+        self._profile_picture_storage.upload(
             content=image_content,
             object_name=object_name,
             content_type=content_type,
@@ -40,7 +40,6 @@ class UploadUserProfilePictureInteractor:
         profile_picture = S3File(
             id=uuid4(),
             object_name=object_name,
-            url=url,
             content_type=content_type,
         )
         existing = await self._s3_files_repo.get_by_user_id(user.id)

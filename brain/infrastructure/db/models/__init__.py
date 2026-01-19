@@ -3,4 +3,5 @@ from .jwt import JwtRefreshTokenDB
 from .keyword import KeywordDB, NoteKeywordDB
 from .note import NoteDB
 from .tg_bot_auth import TelegramBotAuthSessionDB
-from .user import UserDB, S3FileDB
+from .user import UserDB
+from .s3 import S3FileDB
