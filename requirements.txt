@@ -1,3 +1,5 @@
+# Managed via uv. Update by running `uv pip compile pyproject.toml -o requirements.txt`.
+# This file remains for container builds that install with pip.
 pytest
 pytest-freezegun
 PyJWT

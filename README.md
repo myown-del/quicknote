@@ -19,6 +19,15 @@ This project follows a layered (clean) architecture with explicit dependency dir
 
 Typical request flow: presentation layer calls an interactor → interactor uses domain services + repository interfaces → infrastructure provides implementations and persists data.
 
+## Local development
+
+This repo relies on [uv](https://github.com/astral-sh/uv).
+
+1. Install uv (see the uv README for the preferred installer on your platform).
+2. Create/sync the virtual environment: `uv sync` (or `make venv`). This command creates `.venv` and installs everything defined in `pyproject.toml`.
+3. Run commands through uv so the managed interpreter is used, e.g. `uv run pytest tests --disable-warnings -s` or use the provided `make test` target.
+4. After changing dependencies run `uv lock` (or `uv sync --locked`) and commit the updated `uv.lock`.
+
 ## Tests
 
 Tests are split by scope:

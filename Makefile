@@ -1,9 +1,12 @@
-.PHONY: venv start start-db start-background build test migration migrate
+.PHONY: venv sync start start-db start-background build test migration migrate
+
+UV ?= uv
 
 venv:
-	rm -rf venv
-	python -m venv venv
-	./venv/bin/pip install -r requirements.txt
+	$(UV) sync
+
+sync:
+	$(UV) sync
 
 start:
 	docker compose -f docker-compose.yml up --force-recreate --remove-orphans
@@ -18,10 +21,10 @@ build:
 	docker compose -f docker-compose.yml build
 
 test:
-	pytest tests --disable-warnings -s
+	$(UV) run pytest tests --disable-warnings -s
 
 migration:
-	alembic revision --autogenerate
+	$(UV) run alembic revision --autogenerate
 
 migrate:
-	alembic upgrade head
+	$(UV) run alembic upgrade head
