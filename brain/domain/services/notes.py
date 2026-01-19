@@ -9,6 +9,7 @@ def ensure_keyword_note_valid(
     represents_keyword: bool,
     existing_keyword_count: int,
 ) -> None:
+    """Validate constraints around keyword notes before persisting changes."""
     if not represents_keyword:
         return
     if not title:
@@ -18,4 +19,5 @@ def ensure_keyword_note_valid(
 
 
 def sanitize_filename(filename: str) -> str:
+    """Strip disallowed characters so filenames remain filesystem friendly."""
     return "".join(c for c in filename if c.isalnum() or c in (" ", "-", "_")).strip()

@@ -4,6 +4,7 @@ from brain.domain.value_objects import LinkInterval
 
 
 def apply_patch(text: str, patch_text: str) -> str:
+    """Apply a diff-match-patch string to the original text and return the result."""
     dmp = dmp_module.diff_match_patch()
     patches = dmp.patch_fromText(patch_text)
     new_text, _ = dmp.patch_apply(patches, text)
@@ -11,16 +12,14 @@ def apply_patch(text: str, patch_text: str) -> str:
 
 
 def get_patches_str(text1: str, text2: str) -> str:
+    """Produce the serialized patch instructions needed to transform text1 into text2."""
     dmp = dmp_module.diff_match_patch()
     patches = dmp.patch_make(text1, text2)
     return dmp.patch_toText(patches)
 
 
 def get_diffs(text1: str, text2: str) -> list[tuple[int, int]]:
-    """
-    Returns a list of (start, length) tuples representing changed regions in text2
-    relative to text1, but properly mapped to offsets.
-    """
+    """Return diff tuples describing how text2 differs from text1."""
     dmp = dmp_module.diff_match_patch()
     diffs = dmp.diff_main(text1, text2)
     dmp.diff_cleanupSemantic(diffs)

@@ -19,6 +19,7 @@ def collect_cleanup_keyword_names(
     represents_keyword_id: UUID,
     title: str,
 ) -> list[str]:
+    """Build a normalized set of keyword names that should be kept in sync."""
     names = list(link_targets)
     if represents_keyword_id and title:
         names.append(title)

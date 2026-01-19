@@ -9,6 +9,7 @@ WIKILINK_PATTERN = re.compile(r"\[\[([^\[\]\n]+)\]\]")
 
 
 def extract_link_targets(text: str) -> list[str]:
+    """Return unique wikilink targets extracted from the supplied text."""
     if not text:
         return []
 
@@ -26,6 +27,7 @@ def extract_link_targets(text: str) -> list[str]:
 
 
 def extract_wikilinks(text: str) -> list[str]:
+    """Backward-compatible alias that returns the list of link targets."""
     return extract_link_targets(text)
 
 
