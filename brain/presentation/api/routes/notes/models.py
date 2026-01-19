@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import date, datetime
 from uuid import UUID
 
 from pydantic import BaseModel, model_validator
@@ -26,3 +26,8 @@ class UpdateNoteSchema(BaseModel):
 class WikilinkSuggestionSchema(BaseModel):
     title: str
     represents_keyword: bool
+
+
+class NoteCreationStatSchema(BaseModel):
+    date: date
+    count: int

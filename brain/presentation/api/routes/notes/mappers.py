@@ -10,8 +10,12 @@ from brain.presentation.api.routes.notes.models import (
     ReadNoteSchema,
     UpdateNoteSchema,
     WikilinkSuggestionSchema,
+    NoteCreationStatSchema,
 )
-from brain.application.abstractions.repositories.models import WikilinkSuggestion
+from brain.application.abstractions.repositories.models import (
+    WikilinkSuggestion,
+    NoteCreationStat,
+)
 from brain.application.types import Unset
 
 
@@ -49,3 +53,9 @@ def map_wikilink_suggestion_to_schema(
     suggestion: WikilinkSuggestion,
 ) -> WikilinkSuggestionSchema:
     return WikilinkSuggestionSchema.model_validate(asdict(suggestion))
+
+
+def map_note_creation_stat_to_schema(
+    stat: NoteCreationStat,
+) -> NoteCreationStatSchema:
+    return NoteCreationStatSchema.model_validate(asdict(stat))

@@ -1,11 +1,14 @@
-from datetime import datetime
+from datetime import date, datetime
 from uuid import UUID
 
 from sqlalchemy import select, text, func, exists
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from brain.application.abstractions.repositories.notes import INotesRepository
-from brain.application.abstractions.repositories.models import WikilinkSuggestion
+from brain.application.abstractions.repositories.models import (
+    WikilinkSuggestion,
+    NoteCreationStat,
+)
 from brain.domain.entities.note import Note
 from brain.infrastructure.db.mappers.notes import map_note_to_db, map_note_to_dm
 from brain.infrastructure.db.models.keyword import KeywordDB
@@ -243,3 +246,31 @@ class NotesRepository(INotesRepository):
                 )
             )
         return suggestions
+
+    async def get_note_creation_stats_by_user_telegram_id(
+        self,
+        telegram_id: int,
+    ) -> list[NoteCreationStat]:
+        created_date = func.date(NoteDB.created_at).label("created_date")
+        stmt = (
+            select(created_date, func.count(NoteDB.id))
+            .join(UserDB)
+            .where(UserDB.telegram_id == telegram_id)
+            .group_by(created_date)
+            .order_by(created_date.asc())
+        )
+        result = await self._session.execute(stmt)
+
+        stats: list[NoteCreationStat] = []
+        for created_at, count in result.all():
+            if isinstance(created_at, str):
+                created_at = date.fromisoformat(created_at)
+            elif isinstance(created_at, datetime):
+                created_at = created_at.date()
+            stats.append(
+                NoteCreationStat(
+                    date=created_at,
+                    count=int(count or 0),
+                )
+            )
+        return stats

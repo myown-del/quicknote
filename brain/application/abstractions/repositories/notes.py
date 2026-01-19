@@ -4,7 +4,10 @@ from typing import Protocol
 from uuid import UUID
 
 from brain.domain.entities.note import Note
-from brain.application.abstractions.repositories.models import WikilinkSuggestion
+from brain.application.abstractions.repositories.models import (
+    WikilinkSuggestion,
+    NoteCreationStat,
+)
 
 
 class INotesRepository(Protocol):
@@ -87,4 +90,11 @@ class INotesRepository(Protocol):
         user_id: UUID,
         query: str,
     ) -> list[WikilinkSuggestion]:
+        raise NotImplementedError
+
+    @abstractmethod
+    async def get_note_creation_stats_by_user_telegram_id(
+        self,
+        telegram_id: int,
+    ) -> list[NoteCreationStat]:
         raise NotImplementedError

@@ -10,6 +10,7 @@ from brain.application.interactors import (
     CreateNoteInteractor,
     DeleteNoteInteractor,
     GetNoteInteractor,
+    GetNoteCreationStatsInteractor,
     GetNotesInteractor,
     SearchNotesByTitleInteractor,
     SearchWikilinkSuggestionsInteractor,
@@ -30,12 +31,14 @@ from brain.presentation.api.routes.notes.mappers import (
     map_note_to_read_schema,
     map_update_schema_to_dto,
     map_wikilink_suggestion_to_schema,
+    map_note_creation_stat_to_schema,
 )
 from brain.presentation.api.routes.notes.models import (
     ReadNoteSchema,
     CreateNoteSchema,
     UpdateNoteSchema,
     WikilinkSuggestionSchema,
+    NoteCreationStatSchema,
 )
 
 
@@ -229,6 +232,18 @@ async def import_notes(
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
+@inject
+async def get_note_creation_stats(
+        interactor: FromDishka[GetNoteCreationStatsInteractor],
+        user: User = Depends(get_user_from_request),
+):
+    stats = await interactor.get_stats(user.telegram_id)
+    return [
+        map_note_creation_stat_to_schema(stat)
+        for stat in stats
+    ]
+
+
 def get_router() -> APIRouter:
     router = APIRouter(prefix='/notes')
     router.add_api_route(
@@ -291,5 +306,13 @@ def get_router() -> APIRouter:
         methods=["POST"],
         summary="Import notes",
         status_code=status.HTTP_204_NO_CONTENT,
+    )
+    router.add_api_route(
+        path='/creation-stats',
+        endpoint=get_note_creation_stats,
+        methods=["GET"],
+        response_model=list[NoteCreationStatSchema],
+        summary="Get note creation stats by date",
+        status_code=status.HTTP_200_OK,
     )
     return router
