@@ -39,7 +39,7 @@ async def test_handle_start_cmd_attaches_user_when_session(monkeypatch: pytest.M
     dialog_manager = FakeDialogManager()
     enqueue_recorder = EnqueueRecorder()
     monkeypatch.setattr(
-        "brain.presentation.tgbot.handlers.commands.upload_user_profile_picture_task.kiq",
+        "brain.presentation.tgbot.tasks.upload_user_profile_picture_task.kiq",
         enqueue_recorder,
     )
 
@@ -63,7 +63,7 @@ async def test_handle_start_cmd_skips_attach_without_session(monkeypatch: pytest
     dialog_manager = FakeDialogManager()
     enqueue_recorder = EnqueueRecorder()
     monkeypatch.setattr(
-        "brain.presentation.tgbot.handlers.commands.upload_user_profile_picture_task.kiq",
+        "brain.presentation.tgbot.tasks.upload_user_profile_picture_task.kiq",
         enqueue_recorder,
     )
 
@@ -87,7 +87,7 @@ async def test_handle_start_cmd_skips_profile_picture_for_bot_user(monkeypatch: 
     dialog_manager = FakeDialogManager()
     enqueue_recorder = EnqueueRecorder()
     monkeypatch.setattr(
-        "brain.presentation.tgbot.handlers.commands.upload_user_profile_picture_task.kiq",
+        "brain.presentation.tgbot.tasks.upload_user_profile_picture_task.kiq",
         enqueue_recorder,
     )
 

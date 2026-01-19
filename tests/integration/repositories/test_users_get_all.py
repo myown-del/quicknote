@@ -1,13 +1,14 @@
 import pytest
 from brain.domain.entities.user import User
-from brain.infrastructure.db.repositories.users import UsersRepository
+from brain.infrastructure.db.repositories.hub import RepositoryHub
 
 
 @pytest.mark.asyncio
 async def test_users_repository_get_all(
-    users_repository: UsersRepository,
+    repo_hub: RepositoryHub,
     user: User,
 ):
+    users_repository = repo_hub.users
     # Check that get_all returns the user created in fixture
     all_users = await users_repository.get_all()
     assert len(all_users) >= 1

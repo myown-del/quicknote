@@ -42,7 +42,8 @@ class NotesGraphRepository(INotesGraphRepository):
             await session.run(
                 """
                 MATCH (n:Note {id: $id})
-                OPTIONAL MATCH (n)-[r:LINKS_TO|HAS_KEYWORD]->()
+                OPTIONAL MATCH (n)-[r]->()
+                WHERE type(r) IN ["LINKS_TO", "HAS_KEYWORD"]
                 DELETE r
                 """,
                 id=str(note.id),
@@ -51,7 +52,8 @@ class NotesGraphRepository(INotesGraphRepository):
             if previous_represents_keyword_id and previous_title != note.title:
                 await session.run(
                     """
-                    MATCH (source:Note)-[r:LINKS_TO]->(target:Note {id: $id})
+                    MATCH (source:Note)-[r]->(target:Note {id: $id})
+                    WHERE type(r) = "LINKS_TO"
                     MATCH (source)-[:HAS_KEYWORD]->(:Keyword {
                         user_id: $user_id,
                         name: $prev_title
@@ -226,8 +228,10 @@ class NotesGraphRepository(INotesGraphRepository):
             "    RETURN n AS seed "
             "} "
             "WITH DISTINCT seed, user_id "
-            f"MATCH p=(seed)-[:HAS_KEYWORD|LINKS_TO*0..{depth}]-(node) "
-            "WHERE all(n IN nodes(p) WHERE "
+            f"MATCH p=(seed)-[*0..{depth}]-(node) "
+            "WHERE all(r IN relationships(p) WHERE "
+            "    type(r) IN ['HAS_KEYWORD', 'LINKS_TO']"
+            ") AND all(n IN nodes(p) WHERE "
             "    (n:Keyword AND n.user_id = user_id) "
             "    OR (n:Note AND n.user_id = user_id AND n.title IS NOT NULL) "
             ") "
@@ -299,8 +303,10 @@ class NotesGraphRepository(INotesGraphRepository):
                     'has_keyword' AS kind,
                     NULL AS to_note_id
                 UNION
-                MATCH (a:Note)-[:LINKS_TO]->(b:Note)
+                MATCH (a:Note)-[r]->(b:Note)
                 WHERE
+                    type(r) = 'LINKS_TO'
+                    AND
                     a.user_id = $user_id
                     AND b.user_id = $user_id
                     AND a.id IN $note_ids

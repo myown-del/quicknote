@@ -1,5 +1,5 @@
 # Running tests
-1. Use venv for running tests.
+1. Use `uv run pytest tests` for running tests.
 2. Always run tests you just wrote. Fix code until tests pass.
 
 # Writing tests

@@ -31,7 +31,7 @@ class UploadUserProfilePictureInteractor:
             raise UserNotFoundException
 
         extension = self._get_extension(content_type)
-        object_name = f"profile_pictures/{user.id}/{uuid4()}.{extension}"
+        object_name = f"avatars/{user.id}/{uuid4()}.{extension}"
         url = self._profile_picture_storage.upload(
             content=image_content,
             object_name=object_name,
