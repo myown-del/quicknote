@@ -271,6 +271,14 @@ def get_router() -> APIRouter:
         status_code=status.HTTP_200_OK
     )
     router.add_api_route(
+        path='/creation-stats',
+        endpoint=get_note_creation_stats,
+        methods=["GET"],
+        response_model=list[NoteCreationStatSchema],
+        summary="Get note creation stats by date",
+        status_code=status.HTTP_200_OK,
+    )
+    router.add_api_route(
         path='',
         endpoint=create_note,
         methods=["POST"],
@@ -306,13 +314,5 @@ def get_router() -> APIRouter:
         methods=["POST"],
         summary="Import notes",
         status_code=status.HTTP_204_NO_CONTENT,
-    )
-    router.add_api_route(
-        path='/creation-stats',
-        endpoint=get_note_creation_stats,
-        methods=["GET"],
-        response_model=list[NoteCreationStatSchema],
-        summary="Get note creation stats by date",
-        status_code=status.HTTP_200_OK,
     )
     return router
